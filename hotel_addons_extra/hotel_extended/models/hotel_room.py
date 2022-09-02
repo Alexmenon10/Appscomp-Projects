@@ -183,6 +183,14 @@ class RoomReservationSummary(models.Model):
                             )
                     else:
                         for chk_date in date_range_list:
+                            reserve_draft_id = self.env["hotel.reservation"].search(
+                                [
+                                    ("checkin", "<=", chk_date),
+                                    ("checkout", ">=", chk_date),
+                                    ("state", "=", "draft"),
+                                ]
+                            )
+                            print('=============================================', reserve_draft_id)
                             ch_dt = chk_date[:10] + " 23:59:59"
                             ttime = datetime.strptime(ch_dt, dt)
                             c = ttime.replace(tzinfo=timezone).astimezone(
@@ -281,6 +289,17 @@ class RoomReservationSummary(models.Model):
                                         "data_id": reservation_id.id or 0,
                                     }
                                 )
+                            elif reserve_draft_id:
+                                room_list_stats.append(
+                                    {
+                                        "state": "Draft",
+                                        "date": chk_date,
+                                        "room_id": room.id,
+                                        "is_draft": "Yes",
+                                        "data_model": "",
+                                        "data_id": 0,
+                                    }
+                                )
                             else:
                                 room_list_stats.append(
                                     {
@@ -292,6 +311,7 @@ class RoomReservationSummary(models.Model):
 
                     room_detail.update({"value": room_list_stats})
                     all_room_detail.append(room_detail)
+                    print('**********************************', all_room_detail)
             else:
                 room_ids = room_obj.search([])
                 for room in room_ids:
@@ -309,6 +329,14 @@ class RoomReservationSummary(models.Model):
                             )
                     else:
                         for chk_date in date_range_list:
+                            reserve_draft_id = self.env["hotel.reservation"].search(
+                                [
+                                    ("checkin", "<=", chk_date),
+                                    ("checkout", ">=", chk_date),
+                                    ("state", "=", "draft"),
+                                ]
+                            )
+                            print('=============================================', reserve_draft_id)
                             ch_dt = chk_date[:10] + " 23:59:59"
                             ttime = datetime.strptime(ch_dt, dt)
                             c = ttime.replace(tzinfo=timezone).astimezone(
@@ -405,6 +433,17 @@ class RoomReservationSummary(models.Model):
                                         "is_draft": "No",
                                         "data_model": "",
                                         "data_id": reservation_id.id or 0,
+                                    }
+                                )
+                            elif reserve_draft_id:
+                                room_list_stats.append(
+                                    {
+                                        "state": "Draft",
+                                        "date": chk_date,
+                                        "room_id": room.id,
+                                        "is_draft": "Yes",
+                                        "data_model": "",
+                                        "data_id": 0,
                                     }
                                 )
                             else:

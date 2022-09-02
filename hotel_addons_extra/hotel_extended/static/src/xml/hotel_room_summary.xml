@@ -43,6 +43,18 @@
                                     <t t-esc="status.state"/>
                                 </td>
                             </t>
+<!--                            <t-->
+<!--                                    t-if="status.state == 'draft' and status.is_draft == 'Yes'"-->
+<!--                            >-->
+<!--                                <td-->
+<!--                                        class="table_draft"-->
+<!--                                        t-att-data-model="status.data_model"-->
+<!--                                        t-att-data-id="status.data_id"-->
+<!--                                        style="text-align:center;"-->
+<!--                                >-->
+<!--                                    <t t-esc="status.state"/>-->
+<!--                                </td>-->
+<!--                            </t>-->
                             <t t-if="status.is_draft == 'Yes'">
                                 <td
                                         class="table_reserved1"

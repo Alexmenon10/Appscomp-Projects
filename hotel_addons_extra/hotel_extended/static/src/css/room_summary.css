@@ -14,12 +14,13 @@
     border: 5px solid #fff;
 }
 .table_reserved1 {
-    background-color: blue;
+    background-color: #cc9900;
     color: white;
     text-align: center;
     min-width: 100px;
     vertical-align: middle;
     cursor: pointer;
+    border: 5px solid #fff;
 }
 .table_free {
     background-color:#34ae62;

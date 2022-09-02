@@ -162,7 +162,7 @@ class QuickRoomReservation(models.TransientModel):
                     "company_id": res.company_id.id,
                     "pricelist_id": res.pricelist_id.id,
                     "adults": res.adults,
-                    "state": 'confirm',
+                    # "state": 'confirm',
                     "reservation_line": [
                         (
                             0,
@@ -190,7 +190,8 @@ class QuickRoomReservation(models.TransientModel):
                 "status": "confirm",
                 "reservation_id": hotel_res_obj_new.id,
             }
-            self.env["hotel.room.reservation.line"].create(vals)
+            # self.env["hotel.room.reservation.line"].create(vals)
+            self.room_id.room_reservation_line_ids.create(vals)
         return rec
 
     @api.onchange('create_guest')
