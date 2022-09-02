@@ -269,6 +269,8 @@ class RoomReservationSummary(models.Model):
                                 ]
                             )
                             if reservline_ids or folio_resrv_ids:
+                                if hasattr(reservline_ids, 'reservation_id') and reservline_ids.reservation_id:
+                                    reservation_id = reservline_ids.reservation_id
                                 room_list_stats.append(
                                     {
                                         "state": "Reserved",
@@ -276,7 +278,7 @@ class RoomReservationSummary(models.Model):
                                         "room_id": room.id,
                                         "is_draft": "No",
                                         "data_model": "",
-                                        "data_id": 0,
+                                        "data_id": reservation_id.id or 0,
                                     }
                                 )
                             else:
@@ -393,6 +395,8 @@ class RoomReservationSummary(models.Model):
                                 ]
                             )
                             if reservline_ids or folio_resrv_ids:
+                                if hasattr(reservline_ids, 'reservation_id') and reservline_ids.reservation_id:
+                                    reservation_id = reservline_ids.reservation_id
                                 room_list_stats.append(
                                     {
                                         "state": "Reserved",
@@ -400,7 +404,7 @@ class RoomReservationSummary(models.Model):
                                         "room_id": room.id,
                                         "is_draft": "No",
                                         "data_model": "",
-                                        "data_id": 0,
+                                        "data_id": reservation_id.id or 0,
                                     }
                                 )
                             else:
@@ -411,7 +415,6 @@ class RoomReservationSummary(models.Model):
                                         "room_id": room.id,
                                     }
                                 )
-
                     room_detail.update({"value": room_list_stats})
                     all_room_detail.append(room_detail)
             main_header.append({"header": summary_header_list})

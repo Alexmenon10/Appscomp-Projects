@@ -16,7 +16,6 @@ class HotelReservationWizard(models.TransientModel):
             "model": "hotel.reservation",
             "form": self.read(["date_start", "date_end"])[0],
         }
-        print('******************************************', data )
 
         return self.env.ref("hotel_extended.hotel_roomres_details").report_action(
             self, data=data
@@ -95,15 +94,3 @@ class NewQuickReservationWizard(models.TransientModel):
         ('3', 'High')],
         string='Priority')
 
-    def create_new_guest(self):
-        view_id = self.sudo().env['quick.room.reservation']
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Guest Quick Reservation',
-            'res_model': 'quick.room.reservation',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_id': view_id.id,
-            'view_id': self.env.ref('hotel_extended.quick_room_reservation_form_view', False).id,
-            'target': 'new',
-        }

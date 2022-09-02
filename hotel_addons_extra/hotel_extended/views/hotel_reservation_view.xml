@@ -99,7 +99,7 @@
                             <field name="adults" required="1"/>
                             <field name="children"/>
                             <field name="booking_hrs" force_save="1"/>
-                            <field name="days"/>
+                            <field name="days" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         </group>
                     </group>
                     <notebook>

@@ -37,6 +37,7 @@
                                         class="table_reserved"
                                         t-att-data-model="status.data_model"
                                         t-att-data-id="status.data_id"
+
                                         style="text-align:center;"
                                 >
                                     <t t-esc="status.state"/>

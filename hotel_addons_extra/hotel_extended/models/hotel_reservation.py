@@ -9,7 +9,6 @@ from odoo.exceptions import ValidationError
 
 
 class HotelReservation(models.Model):
-
     _name = "hotel.reservation"
     _rec_name = "reservation_no"
     _description = "Reservation"
@@ -67,8 +66,8 @@ class HotelReservation(models.Model):
         readonly=True,
         states={"draft": [("readonly", False)]},
         help="The name and address of the "
-        "contact that requested the order "
-        "or quotation.",
+             "contact that requested the order "
+             "or quotation.",
     )
     partner_shipping_id = fields.Many2one(
         "res.partner",
@@ -130,6 +129,7 @@ class HotelReservation(models.Model):
     no_of_folio = fields.Integer("No. Folio", compute='_compute_folio_count')
     booking_hrs = fields.Float(string='Hrs', compute='_calculate_hrs', store=True)
     days = fields.Char(string='Days', store=True)
+
     @api.depends('checkin', 'checkout')
     @api.onchange('checkin', 'checkout')
     def _calculate_hrs(self):
@@ -205,7 +205,6 @@ class HotelReservation(models.Model):
             if reservation.adults <= 0:
                 raise ValidationError(_("Alert!, Adults must be more than 0"))
 
-
     @api.onchange("partner_id")
     def _onchange_partner_id(self):
         """
@@ -232,7 +231,8 @@ class HotelReservation(models.Model):
                     "pricelist_id": self.partner_id.property_product_pricelist.id,
                 }
             )
-#
+
+    #
     @api.model
     def create(self, vals):
         """
@@ -241,12 +241,10 @@ class HotelReservation(models.Model):
         @param vals: dictionary of fields value.
         """
         vals["reservation_no"] = (
-            self.env["ir.sequence"].next_by_code("hotel.reservation") or "New"
+                self.env["ir.sequence"].next_by_code("hotel.reservation") or "New"
         )
-        # print("========================================", vals)
 
         return super(HotelReservation, self).create(vals)
-
 
     def check_overlap(self, date1, date2):
         delta = date2 - date1
@@ -270,10 +268,10 @@ class HotelReservation(models.Model):
                 for room in line_id.reserve:
                     if room.room_reservation_line_ids:
                         for reserv in room.room_reservation_line_ids.search(
-                            [
-                                ("status", "in", ("confirm", "done")),
-                                ("room_id", "=", room.id),
-                            ]
+                                [
+                                    ("status", "in", ("confirm", "done")),
+                                    ("room_id", "=", room.id),
+                                ]
                         ):
                             check_in = reserv.check_in
                             check_out = reserv.check_out
@@ -282,8 +280,8 @@ class HotelReservation(models.Model):
                             if check_in <= reserv_checkout <= check_out:
                                 room_bool = True
                             if (
-                                reserv_checkin <= check_in
-                                and reserv_checkout >= check_out
+                                    reserv_checkin <= check_in
+                                    and reserv_checkout >= check_out
                             ):
                                 room_bool = True
                             r_checkin = reservation.checkin.date()
@@ -360,10 +358,12 @@ class HotelReservation(models.Model):
         for reservation_line in reservation_lines:
             reservation_line.reserve.write({"isroom": True, "status": "available"})
         return True
-#
+
+    #
     def set_to_draft_reservation(self):
         self.update({"state": "draft"})
-#
+
+    #
     def action_send_reservation_mail(self):
         """
         This function opens a window to compose an email,
@@ -413,9 +413,9 @@ class HotelReservation(models.Model):
             checkin_date = reserv_rec.checkin
             difference = relativedelta(now_date, checkin_date)
             if (
-                difference.days == -1
-                and reserv_rec.partner_id.email
-                and reserv_rec.state == "confirm"
+                    difference.days == -1
+                    and reserv_rec.partner_id.email
+                    and reserv_rec.state == "confirm"
             ):
                 template_id.send_mail(reserv_rec.id, force_send=True)
         return True
@@ -476,7 +476,7 @@ class HotelReservation(models.Model):
         return True
 
     def _onchange_check_dates(
-        self, checkin_date=False, checkout_date=False, duration=False
+            self, checkin_date=False, checkout_date=False, duration=False
     ):
         """
         This method gives the duration between check in checkout if
@@ -513,9 +513,9 @@ class HotelReservation(models.Model):
             action = {"type": "ir.actions.act_window_close"}
         return action
 
+
 #
 class HotelReservationLine(models.Model):
-
     _name = "hotel.reservation.line"
     _description = "Reservation Line"
 
@@ -554,35 +554,35 @@ class HotelReservationLine(models.Model):
         for room in hotel_room_ids:
             assigned = False
             for line in room.room_reservation_line_ids.filtered(
-                lambda l: l.status != "cancel"
+                    lambda l: l.status != "cancel"
             ):
                 if self.line_id.checkin and line.check_in and self.line_id.checkout:
                     if (
-                        self.line_id.checkin <= line.check_in <= self.line_id.checkout
+                            self.line_id.checkin <= line.check_in <= self.line_id.checkout
                     ) or (
-                        self.line_id.checkin <= line.check_out <= self.line_id.checkout
+                            self.line_id.checkin <= line.check_out <= self.line_id.checkout
                     ):
                         assigned = True
                     elif (line.check_in <= self.line_id.checkin <= line.check_out) or (
-                        line.check_in <= self.line_id.checkout <= line.check_out
+                            line.check_in <= self.line_id.checkout <= line.check_out
                     ):
                         assigned = True
             for rm_line in room.room_line_ids.filtered(lambda l: l.status != "cancel"):
                 if self.line_id.checkin and rm_line.check_in and self.line_id.checkout:
                     if (
-                        self.line_id.checkin
-                        <= rm_line.check_in
-                        <= self.line_id.checkout
+                            self.line_id.checkin
+                            <= rm_line.check_in
+                            <= self.line_id.checkout
                     ) or (
-                        self.line_id.checkin
-                        <= rm_line.check_out
-                        <= self.line_id.checkout
+                            self.line_id.checkin
+                            <= rm_line.check_out
+                            <= self.line_id.checkout
                     ):
                         assigned = True
                     elif (
-                        rm_line.check_in <= self.line_id.checkin <= rm_line.check_out
+                            rm_line.check_in <= self.line_id.checkin <= rm_line.check_out
                     ) or (
-                        rm_line.check_in <= self.line_id.checkout <= rm_line.check_out
+                            rm_line.check_in <= self.line_id.checkout <= rm_line.check_out
                     ):
                         assigned = True
             if not assigned:
@@ -610,9 +610,9 @@ class HotelReservationLine(models.Model):
                     myobj.unlink()
         return super(HotelReservationLine, self).unlink()
 
+
 #
 class HotelRoomReservationLine(models.Model):
-
     _name = "hotel.room.reservation.line"
     _description = "Hotel Room Reservation"
     _rec_name = "room_id"

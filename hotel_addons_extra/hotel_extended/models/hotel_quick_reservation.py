@@ -79,6 +79,9 @@ class QuickRoomReservation(models.TransientModel):
         string='Do You Want to Generate a New Guest...?'
     )
 
+    def test_code(self):
+        pass
+
     @api.onchange("check_out", "check_in")
     def _on_change_check_out(self):
         """
@@ -137,6 +140,7 @@ class QuickRoomReservation(models.TransientModel):
             roomid = self._context["room_id"]
             res.update({"room_id": int(roomid)})
         return res
+
     #
     def room_reserve(self):
         """
@@ -158,6 +162,7 @@ class QuickRoomReservation(models.TransientModel):
                     "company_id": res.company_id.id,
                     "pricelist_id": res.pricelist_id.id,
                     "adults": res.adults,
+                    "state": 'confirm',
                     "reservation_line": [
                         (
                             0,
@@ -170,8 +175,23 @@ class QuickRoomReservation(models.TransientModel):
                     ],
                 }
             )
+            hotel_res_obj_new= self.env["hotel.reservation"].search([
+                ("partner_id", "=", res.partner_id.id),
+                ("checkin", "=", res.check_in),
+                ("checkout", "=", res.check_out),
+                ("adults", "=", res.adults),
+                # ("reservation_line.name", "=", res.room_id.name),
+            ])
+            vals = {
+                "room_id": res.room_id.id,
+                "check_in": res.check_in,
+                "check_out": res.check_out,
+                "state": "assigned",
+                "status": "confirm",
+                "reservation_id": hotel_res_obj_new.id,
+            }
+            self.env["hotel.room.reservation.line"].create(vals)
         return rec
-
 
     @api.onchange('create_guest')
     def create_new_guest(self):

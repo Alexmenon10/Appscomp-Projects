@@ -53,7 +53,6 @@ odoo.define("hotel_reservation.hotel_room_summary", function (require) {
         view_loading: function (r) {
             return this.load_form(r);
         },
-
         load_form: function () {
             var self = this;
             this.$el.find(".table_free").bind("click", function () {
@@ -69,6 +68,16 @@ odoo.define("hotel_reservation.hotel_room_summary", function (require) {
                     },
                 });
             });
+            this.$el.find(".table_reserved").bind("click", function () {
+                var res_id = $(this).data("id");
+                self.do_action({
+                    type: "ir.actions.act_window",
+                    res_model: "hotel.reservation",
+                    views: [[false, "form"]],
+                    target: "new",
+                    res_id: res_id || false,
+                });
+            });
         },
         renderElement: function () {
             this._super();
@@ -79,7 +88,6 @@ odoo.define("hotel_reservation.hotel_room_summary", function (require) {
             );
         },
         _onFieldChanged: function (event) {
-        console.log('Js csalledd My widgetttttttt>>>>>141414>>>>')
             this._super();
             this.lastChangeEvent = event;
             this.set({

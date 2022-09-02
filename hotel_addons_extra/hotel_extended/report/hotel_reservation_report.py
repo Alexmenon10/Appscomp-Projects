@@ -132,7 +132,6 @@ class ReportTestMaxroom(models.AbstractModel):
         res = self.env["hotel.reservation"].sudo().search(
             [("checkin", ">=", date_start), ("checkout", "<=", date_end)]
         )
-        print('%%%%%%%%%%%%%%%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$' , res)
         return res
 
     def _get_room_used_detail(self, date_start, date_end):
@@ -217,18 +216,15 @@ class ReportRoomReservation(models.AbstractModel):
 
     def _get_data(self, date_start, date_end):
         reservation_obj = self.env["hotel.reservation"]
-        print('**************************REservation****************' ,reservation_obj.checkin)
 
         res = reservation_obj.search(
             [("checkin", ">=", date_start), ("checkout", "<=", date_end)]
         )
-        print('**************************REservation****************' ,reservation_obj)
         return res
 
 
     @api.model
     def _get_report_values(self, docids, data):
-        print('**************************REservation****************')
         active_model = self.env.context.get("active_model")
         if data is None:
             data = {}
