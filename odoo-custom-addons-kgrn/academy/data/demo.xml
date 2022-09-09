@@ -1,0 +1,21 @@
+<odoo>
+    <data>
+        <record id="hr_employee" model="website.menu">
+            <field name="name">Employee</field>
+            <field name="url">/employee</field>
+            <field name="parent_id" ref="website.main_menu"/>
+            <field name="sequence" type="int">99</field>
+        </record>
+        <record id="hr_employee_supplier" model="website.menu">
+            <field name="name">Supplier</field>
+            <field name="url">/employee</field>
+            <field name="parent_id" ref="website.main_menu"/>
+            <field name="sequence" type="int">99</field>
+        </record>
+        <record id="wenu_weather_form" model="website.menu">
+            <field name="name">Weather</field>
+            <field name="parent_id" ref="academy.hr_employee"/>
+            <field name="sequence">1</field>
+        </record>
+    </data>
+</odoo>

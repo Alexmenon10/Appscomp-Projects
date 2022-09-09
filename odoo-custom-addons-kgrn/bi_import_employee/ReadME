@@ -1,0 +1,4 @@
+1) Version: 14.0.0.1 | Date : 29/10/2020
+- Replace warning to UserError.
+
+=> 14.0.0.2 : Link module video into index and manifest file.

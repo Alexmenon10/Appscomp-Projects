@@ -1,0 +1,63 @@
+<odoo>
+    <template id="snippet_testimonial" name="My New Form">
+        <section class="snippet_testimonial" id="snippet_test">
+            <div class="container m-4 bg-info">
+                <div class="row my_snippet justify-content-around">
+                    <div class="col-4 card p-4">
+                        <form role="form" class="container" action="/create/new_employee" method="POST">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="form-group">
+                                <label for="employee_name">Name</label>
+                                <input type="name" class="form-control" name="name" id="name"
+                                       placeholder="Employee Name"
+                                       required="required"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Email</label>
+                                <input type="email" class="form-control" name="work_email" id="work_email"
+                                       placeholder="Enter email" required="required"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Phone</label>
+                                <input type="phone" class="form-control" name="work_phone" id="work_phone"
+                                       placeholder="Phone Number" required="required"/>
+                            </div>
+                            <div class="w-100 row">
+                                <div class="form-group col-6">
+                                    <label for="examplecountry">Country</label>
+                                    <select name="country" id="country" t-attf-class="form-control">
+                                        <t t-foreach="country" t-as="name">
+                                            <option>
+                                                <span t-esc="name.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="examplestate">State</label>
+                                    <select name="state" id="state" t-attf-class="form-control">
+                                        <t t-foreach="state" t-as="name">
+                                            <option>
+                                                <span t-esc="name.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </template>
+
+    <template id="world_snippet" inherit_id="website.snippets" name="new snippets">
+        <xpath expr="//div[@id='snippet_structure']/div[@class='o_panel_body']" position="inside">
+            <t t-snippet="academy.snippet_testimonial"
+               t-thumbnail="/academy/static/src/form.png"/>
+        </xpath>
+    </template>
+
+</odoo>
