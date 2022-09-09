@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="crm_lead_form_inherited_id" model="ir.ui.view">
+            <field name="name">crm.lead.inherited.form</field>
+            <field name="model">crm.lead</field>
+            <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_id']" position="attributes">
+                    <attribute name="string">Service Person</attribute>
+                </xpath>
+                <xpath expr="//field[@name='team_id']" position="attributes">
+                    <attribute name="string">Service Team</attribute>
+                </xpath>
+                <xpath expr="//button[@name='action_sale_quotations_new']" position="attributes">
+                    <attribute name="string">New Proposal</attribute>
+                </xpath>
+                <xpath expr="//field[@name='quotation_count']" position="attributes">
+                    <attribute name="string">Proposal</attribute>
+                </xpath>
+                <xpath expr="//label[@for='name']" position="attributes">
+                    <attribute name="string">Nature of Opportunity</attribute>
+                </xpath>
+                <xpath expr="//field[@name='team_id']" position="after">
+                    <field name="create_date"/>
+                    <field name="estimate_date"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="sale_order_form_inherited_id" model="ir.ui.view">
+            <field name="name">sale.order.inherited.form</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_id']" position="attributes">
+                    <attribute name="string">Service Person</attribute>
+                </xpath>
+                <xpath expr="//field[@name='user_id']" position="after">
+                    <field name="team_members" options="{'no_open': True, 'no_create': True}" widget="many2many_tags"
+                           invisible="1"/>
+                    <field name="team_members_mail" invisible="1"/>
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="remainder_date" required="1"/>
+                    <field name="remainder_datetime" required="0" invisible="1"/>
+                </xpath>
+                <xpath expr="//field[@name='team_id']" position="attributes">
+                    <attribute name="string">Service Team</attribute>
+                </xpath>
+                <xpath expr="//group[@name='sales_person']" position="attributes">
+                    <attribute name="string">Service</attribute>
+                </xpath>
+                <xpath expr="//field[@name='state']" position="replace">
+                    <field name="state" widget="statusbar" statusbar_visible="draft,sent,sale"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="crm_team_form_inherited_id" model="ir.ui.view">
+            <field name="name">crm.team.inherited.form</field>
+            <field name="model">crm.team</field>
+            <field name="inherit_id" ref="sales_team.crm_team_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//label[@for='name']" position="attributes">
+                    <attribute name="string">Service Team</attribute>
+                </xpath>
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="placeholder">Service Team Name</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="crm_lead_to_opportunity_form_inherited_id" model="ir.ui.view">
+            <field name="name">crm.lead2opportunity.partner.inherited.form</field>
+            <field name="model">crm.lead2opportunity.partner</field>
+            <field name="inherit_id" ref="crm.view_crm_lead2opportunity_partner"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_id']" position="attributes">
+                    <attribute name="string">Service Person</attribute>
+                </xpath>
+                <xpath expr="//field[@name='team_id']" position="attributes">
+                    <attribute name="string">Service Team</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="crm_lead_lost_view_form_inherited_id" model="ir.ui.view">
+            <field name="name">crm.lead.lost.inherited.form</field>
+            <field name="model">crm.lead.lost</field>
+            <field name="inherit_id" ref="crm.crm_lead_lost_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='lost_reason_id']" position="after">
+                    <field name="future_follow_date" required="1"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="sale.action_orders" model="ir.actions.act_window">
+            <field name="name">Service Engagement</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+            <field name="search_view_id" ref="sale.sale_order_view_search_inherit_sale"/>
+            <field name="context">{}</field>
+            <field name="domain">[('state', 'not in', ('draft', 'sent', 'cancel'))]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new quotation, the first step of a new sale!
+                </p>
+                <p>
+                    Once the quotation is confirmed, it becomes a sales order.
+                    <br/>
+                    You will be able to create an invoice and collect the payment.
+                </p>
+            </field>
+        </record>
+
+        <!-- Sales Teams Actions -->
+
+<!--        <record id="sales_team.sales_team_config_action" model="ir.actions.act_window">-->
+<!--            <field name="name">Service Teams</field>-->
+<!--            <field name="res_model">crm.team</field>-->
+<!--            <field name="view_mode">tree,form</field>-->
+<!--            <field name="context">{}</field>-->
+<!--            <field name="view_id" ref="sales_team.crm_team_salesteams_search"/>-->
+<!--            <field name="help" type="html">-->
+<!--                <p class="o_view_nocontent_smiling_face">-->
+<!--                    Define a new sales team-->
+<!--                </p>-->
+<!--                <p>-->
+<!--                    Use Sales Teams to organize your sales departments.-->
+<!--                    Each team will work with a separate pipeline.-->
+<!--                </p>-->
+<!--            </field>-->
+<!--        </record>-->
+
+
+        <!-- Sales Quotation Actions -->
+
+        <record id="sale.action_quotations" model="ir.actions.act_window">
+            <field name="name">Proposal</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+            <field name="search_view_id" ref="sale.sale_order_view_search_inherit_quotation"/>
+            <field name="context">{'search_default_my_quotation': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new quotation, the first step of a new sale!
+                </p>
+                <p>
+                    Once the quotation is confirmed by the customer, it becomes a sales order.
+                    <br/>
+                    You will be able to create an invoice and collect the payment.
+                </p>
+            </field>
+        </record>
+
+        <record id="sale.action_quotations_with_onboarding" model="ir.actions.act_window">
+            <field name="name">Proposal</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_id" ref="sale.view_quotation_tree_with_onboarding"/>
+            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+            <field name="search_view_id" ref="sale.sale_order_view_search_inherit_quotation"/>
+            <field name="context">{'search_default_my_quotation': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new quotation, the first step of a new sale!
+                </p>
+                <p>
+                    Once the quotation is confirmed by the customer, it becomes a sales order.
+                    <br/>
+                    You will be able to create an invoice and collect the payment.
+                </p>
+            </field>
+        </record>
+
+
+        <record model="ir.ui.menu" id="sale.sale_menu_root">
+            <field name="name">Service</field>
+        </record>
+        <record model="ir.ui.menu" id="sale.report_sales_team">
+            <field name="name">Service Team</field>
+        </record>
+        <record model="ir.ui.menu" id="sale.sales_team_config">
+            <field name="name">Service Team</field>
+        </record>
+        <record model="ir.ui.menu" id="sale.menu_sales_config">
+            <field name="name">Service Engagement</field>
+        </record>
+        <record model="ir.ui.menu" id="sale.menu_report_product_all">
+            <field name="name">Service</field>
+        </record>
+        <record model="ir.ui.menu" id="crm.crm_menu_sales">
+            <field name="name">Service</field>
+        </record>
+        <record model="ir.ui.menu" id="crm.crm_team_config">
+            <field name="name">Service Team</field>
+        </record>
+        <record model="ir.ui.menu" id="account.menu_action_account_moves_journal_sales">
+            <field name="name">Service</field>
+        </record>
+        <record model="ir.ui.menu" id="sale_crm.sale_order_menu_quotations_crm">
+            <field name="name">My Proposal</field>
+        </record>
+        <record model="ir.ui.menu" id="sale.menu_sale_quotations">
+            <field name="name">Proposal</field>
+        </record>
+        <record model="ir.ui.menu" id="sale.sale_order_menu">
+            <field name="name">Service Engagement</field>
+        </record>
+        <record model="ir.ui.menu" id="sale.menu_sale_order">
+            <field name="name">Service Engagement</field>
+        </record>
+    </data>
+</odoo>

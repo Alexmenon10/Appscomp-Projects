@@ -1,0 +1,33 @@
+<odoo>
+    <data>
+        <!-- explicit list view definition -->
+        <record model="ir.ui.view" id="academy.list">
+            <field name="name">Academy list</field>
+            <field name="model">academy.academy</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="city"/>
+                    <field name="country_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- actions opening views on models -->
+        <record model="ir.actions.act_window" id="academy.action_window">
+            <field name="name">Academy</field>
+            <field name="res_model">academy.academy</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Top menu item -->
+        <menuitem name="Academy" id="academy.menu_root"/>
+        <menuitem name="Locations" id="academy.menu_1" parent="academy.menu_root"/>
+        <menuitem name="Menu 2" id="academy.menu_2" parent="academy.menu_root"/>
+
+        <!-- actions -->
+        <menuitem name="Academy" id="academy.menu_1_list" parent="academy.menu_1"
+                  action="academy.action_window"/>
+
+    </data>
+</odoo>

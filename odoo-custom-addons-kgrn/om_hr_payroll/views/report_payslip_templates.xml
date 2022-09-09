@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_payslip">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div align="center">
+							<h4>
+							<td>
+								<strong><h5 align="center"><p style="font-size:85%;" t-field="o.name" /></h5></strong>
+							</td>
+							</h4>
+						</div>
+                        
+<!--
+                        <strong><h5 align="center">Pay Slip</h5></strong>
+-->
+				        
+                        
+                        
+
+                <table class="table table-condensed table-bordered" border="5">
+				 <thead style="font-size:90%; ">
+						<tr>
+							<th colspan="2" style="width: 30%; ">
+								<strong style="color:black;">Employee Details</strong>
+							</th>
+							<th colspan="5" style="width: 30%;">
+								<strong style="color:black;">Payment Details</strong>
+							</th>
+							<th colspan="2" style="width: 30%;">
+								<strong style="color:black;">Location Details</strong>
+							</th>
+						</tr>
+					</thead>
+					<tbody style="font-size:70%;">
+						<tr>
+<!--							<td>-->
+<!--								<strong>Employee Id.</strong>-->
+<!--							</td>-->
+<!--							<td>-->
+<!--								<span t-field="o.employee_id.emp_code" />-->
+<!--							</td>-->
+							<td colspan="2">
+								<strong>Bank Name</strong>
+							</td>
+							<td colspan="3">
+								<span t-field="o.employee_id.bank_account_id.bank_id" />
+							</td>
+							<td>
+								<strong>Location</strong>
+							</td>
+							<td>
+								<span t-field="o.employee_id.work_location" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<strong>Designation</strong>
+							</td>
+							<td>
+								<span t-field="o.employee_id.job_id" />
+							</td>
+							<td colspan="2">
+								<strong>Account Number</strong>
+							</td>
+							<td colspan="3">
+								<span t-field="o.employee_id.bank_account_id.acc_number" />
+							</td>
+							<td>
+								<strong>Department</strong>
+							</td>
+							<td>
+								<span t-field="o.employee_id.department_id.name" />
+							</td>
+						</tr>
+						<tr>
+<!--							<td>-->
+<!--								<strong>PAN</strong>-->
+<!--							</td>-->
+<!--							<td>-->
+<!--								<span t-field="o.employee_id.pan_card_no" />-->
+<!--							</td>-->
+
+<!--							<td colspan="2">-->
+<!--								<strong>Days paid</strong>-->
+<!--							</td>-->
+							<td colspan="3">
+<!--
+								<t t-esc="o.get_no_days_paid()" />
+-->
+
+
+							</td>
+							<td>
+								<strong>No. of Days</strong>
+							</td>
+							<td>
+								<t t-set="days" t-value="0.0" />
+								<p t-foreach="o.worked_days_line_ids" t-as="worked_days">
+									<t t-set="days" t-value="days+worked_days.number_of_days" />
+								</p>
+								<t t-esc="days" />
+							</td>
+
+						</tr>
+						<tr>
+<!--							<td>-->
+<!--								<strong>UAN</strong>-->
+<!--							</td>-->
+<!--							<td>-->
+<!--								<span t-field="o.employee_id.uan_no" />-->
+<!--							</td>-->
+
+							<td colspan="2">
+								<strong>DOB</strong>
+							</td>
+							<td colspan="3">
+								<span t-field="o.employee_id.birthday" />
+							</td>
+							<td>
+								<strong>Date of Joining</strong>
+							</td>
+							<td>
+								<span t-field="o.employee_id.first_contract_date" />
+							</td>
+
+						</tr>
+					</tbody>
+			  </table>
+			  
+			  <div style="width:50%; float:left; ">
+					<table class="table"
+						style="float:left; width:100%; margin-bottom:0px!important;"
+						border="1">
+						<thead style="font-size:90%;">
+							<tr>
+								<th width="70%" style="color:Black;">Earnings</th>
+								<th width="30%" style="color:Black; text-align:center;">Current(AED)</th>
+							</tr>
+						</thead>
+						<tbody style="font-size:80%;">
+							<tr t-foreach="o.line_ids" t-as="line">
+								<t t-if="line.code != 'NET' and line.code != 'GROSS' and line.code != 'ANNUAL' and line.total &gt; 0">
+									<td style="border: 1px solid #161616;padding:3px;text-align: left;">
+										<span t-field="line.name" />
+									</td>
+									<td style="border: 1px solid #161616;padding:3px;text-align: right">
+										<span t-field="line.total" />
+									</td>
+								</t>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				
+				<div style="width:50%; float:left; margin-bottom:-40px;">
+					<table class="table" style="float:right;width:100%; margin-bottom:-40px;"
+						border="1">
+						<thead style="font-size:90%;">
+							<tr>
+								<th width="70%" style="color:Black; text-align:left;">Deductions</th>
+								<th width="30%" style="color:Black; text-align:center;">
+									Amount
+									<small>(AED)</small>
+								</th>
+							</tr>
+						</thead>
+						<tbody style="font-size:80%;">
+							<t t-set="deduct" t-value="0.0" />
+							<tr t-foreach="o.line_ids" t-as="line">
+								<t t-if="line.total &lt; 0">
+									<td style="border: 1px solid #161616;padding:3px;text-align: left">
+										<span t-field="line.name" />
+									</td>
+									<td style="border: 1px solid #161616;padding:3px;text-align: right">
+										<span t-field="line.total" />
+										<t t-set="deduct" t-value="deduct+line.total" />
+									</td>
+								</t>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<table class="table" border="1">
+					<tr
+						style="border: 1px solid #161616;padding:3px; font-size:90%; border-top:2px solid black!important;">
+						<th width="35%" style="text-align: left">Total Earnings</th>
+						<th width="15%" style="text-align: right">
+							<t t-foreach="o.line_ids" t-as="line">
+								<t t-if="line.code == 'GROSS'">
+									<span t-field="line.total" />
+								</t>
+							</t>
+						</th>
+						<th width="35%" style="text-align: left">Total Deductions</th>
+						<th width="15%" style="text-align: right">
+<!--							<t t-if="line.code == 'UP'">-->
+<!--									<span t-field="line.total" />-->
+<!--								</t>-->
+							<t t-esc="round(deduct, 2)" />
+						</th>
+					</tr>
+				</table>
+				
+			  <div style="float:right; width:230px; border: 1px solid #000;">
+
+						<div
+							style="font-size: 20px; height:50px; border-right: 1px solid #000; 
+                                    padding-left: 8px; text-align: left; 
+                                   vertical-align: middle; width: 119px; float:left; margin:0px; line-height:52px;">
+							<b>Net Pay</b>
+							<small style="font-size:55%;">(AED)</small>
+						</div>
+
+						<span
+							style="line-height:45px; text-align:center; font-size: 20px; padding-left:25px;">
+							<t t-set="NET" t-value="0.0" />
+							<t t-foreach="o.line_ids" t-as="line">
+								<t t-if="line.code == 'NET'">
+									<t t-set="NET" t-value="line.total" />
+								</t>
+							</t>
+							<t t-esc="round(NET)" />
+						</span>
+			  </div>
+			<div class="row" style="margin-top:80px">
+				<div class="col-5 mb4">
+<!--					<span style="color:black;">Amount in words:</span><span t-field="o.amount_words"/> 	-->
+				</div>
+				<div class="col-4 mb4">
+					
+				</div>
+<!--				<div class="col-3 mb4">-->
+<!--				 <div><strong>For AppsComp Widget</strong></div>-->
+<!--					<span style="font-size: 20px; padding-left:0px;">HRD</span>-->
+<!--				</div>-->
+			</div>
+<!--				<div class="text-center" style="margin-top:80px">-->
+<!--					<ul class="list-inline mb4 text-nowrap">-->
+<!--						<span>Note:Computer generated No signature Required</span>                    -->
+<!--					</ul>-->
+<!--               </div>-->
+<!--			-->
+			
+<!--
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Quantity/rate</th>
+                                    <th>Amount</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids.filtered(lambda line: line.appears_on_payslip)" t-as="line">
+                                    <td>
+                                        <span t-field="line.code"/>
+                                    </td>
+                                    <td>
+                                        <span t-field="line.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-field="line.quantity"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line.amount"
+                                              t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="line.total"
+                                              t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
+                                    </td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+-->
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

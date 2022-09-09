@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- === Services Page === -->
+    <template id="weather_api">
+        <t t-call="website.layout">
+            <div id="wrap">
+                <div class="container">
+                    <div class="card p-4">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <form role="form" class="container weather_api_form" action="/weather/api" method="POST">
+                            <div class="form-group">
+                                <label for="employee_name">Weather:</label>
+                                <input type="text" class="form-control" name="weather" id="weather"
+                                       placeholder="Country"/>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+
+    <template id="partner_list">
+        <t t-call='website.layout'>
+            <div id="wrap">
+                <table class="table table-hover table-bordered container mt-4" style="padding:20px 30px;"
+                       width="100%">
+                    <thead class="bg-warning">
+                        <tr>
+                            <th valign="middle" align="center"
+                                class="padding_all tbottom ttop text-center">
+                                <strong>Name</strong>
+                            </th>
+                            <th valign="middle" align="center"
+                                class="padding_all tbottom ttop text-center">
+                                <strong>Email</strong>
+                            </th>
+                            <th valign="middle" align="center"
+                                class="padding_all tbottom ttop text-center">
+                                <strong>Phone</strong>
+                            </th>
+                            <th valign="middle" align="center"
+                                class="padding_all tbottom ttop text-center">
+                                <strong>Manager</strong>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="sale_t body">
+                        <t t-foreach="partner_list" t-as="partner">
+                            <tr>
+                                <td class="padding_all tbottom ttop text-left">
+                                    <span t-esc="partner.name"/>
+                                </td>
+                                <td class="padding_all tbottom ttop text-let">
+                                    <span t-esc="partner.email"/>
+                                </td>
+                                <td class="padding_all tbottom ttop text-right">
+                                    <span t-esc="partner.phone"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+        </t>
+    </template>
+</odoo>

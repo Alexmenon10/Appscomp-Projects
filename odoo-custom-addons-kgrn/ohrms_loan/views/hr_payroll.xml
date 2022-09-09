@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_payslip_form_inherit_view" model="ir.ui.view">
+        <field name="name">hr.payslip.inherit.form1</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="om_hr_payroll.view_hr_payslip_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='input_line_ids']//tree//field[@name='sequence']" position="after">
+                <field name="loan_line_id"/>
+            </xpath>
+            <!--            <button name="_compute_sheet" position="after">-->
+            <!--                <button name="without_holiday_calculation" type="object" string="Without Holidays"/>-->
+            <!--            </button>-->
+            <!--            <xpath expr="//field[@name='total_balance_days']" position="after">-->
+            <!--                <field name="bulk_attendance_value"/>-->
+            <!--            </xpath>-->
+        </field>
+    </record>
+
+    <record id="view_bulk_attendance_tree" model="ir.ui.view">
+        <field name="name">bulk.attendance.tree</field>
+        <field name="model">bulk.attendance</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" edit="0" create="0" delete="0">
+                <field name="entry_date" readonly="1"/>
+                <field name="emp_code"/>
+                <field name="employee_id" options='{"no_open": True, "no_create": True}'/>
+                <field name="month_list"/>
+                <field name="year_id" options='{"no_open": True, "no_create": True}'/>
+                <field name="number_of_days"/>
+                <field name="bulk_attendance_employee" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="bulk_attendance_action" model="ir.actions.act_window">
+        <field name="name">Bulk Attendance</field>
+        <field name="res_model">bulk.attendance</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <menuitem action="bulk_attendance_action" name="Bulk Attendance" id="menu_bulk_attendance"
+              parent="hr_attendance.menu_hr_attendance_manage_attendances" sequence="11"/>
+
+</odoo>
