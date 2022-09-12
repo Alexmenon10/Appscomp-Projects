@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="attendance_import_wizard" model="ir.ui.view">
+        <field name="name">attendance.import.wizard.view</field>
+        <field name="model">attendance.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Stock Import">
+                <div class="alert alert-info" role="alert">
+                    <span class="o_form_label">Please Import XLS.</span>
+                </div>
+                <group>
+                    <label for="file_name"/>
+                    <field name="data_file" nolabel="1" filename="file_name"/>
+                    <field name="file_name" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_import" string="Import" type="object"
+                            class="oe_highlight"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_attendance_import_wizard" model="ir.actions.act_window">
+        <field name="name">attendance Line Import</field>
+        <field name="res_model">attendance.import.wizard</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="attendance_import_wizard"/>
+    </record>
+
+
+    <record id="bulk_import_wizard" model="ir.ui.view">
+        <field name="name">attendance.bulk.wizard.view</field>
+        <field name="model">attendance.bulk.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Bulk Attendance">
+                <!--                <div class="alert alert-info" role="alert">-->
+                <!--                    <span class="o_form_label">Please Import XLS.</span>-->
+                <!--                </div>-->
+                <group>
+                    <field name="employee_ids"/>
+                </group>
+                <footer>
+                    <button name="action_bulk_attendance" string="Bulk" type="object"
+                            class="oe_highlight"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bulk_attendance_wizard" model="ir.actions.act_window">
+        <field name="name">attendance Bulk Import</field>
+        <field name="res_model">attendance.bulk.wizard</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="bulk_import_wizard"/>
+    </record>
+
+</odoo>

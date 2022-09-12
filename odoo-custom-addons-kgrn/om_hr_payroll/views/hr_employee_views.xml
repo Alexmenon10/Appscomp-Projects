@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="payroll_hr_employee_view_form" model="ir.ui.view">
+        <field name="name">payroll.hr.employee.view.form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="%(om_hr_payroll.act_hr_employee_payslip_list)d" class="oe_stat_button"
+                        icon="fa-money" type="action" string="Payslip">
+                    <field name="payslip_count" widget="statinfo"/>
+                </button>
+            </xpath>
+
+            <field name="parent_id" position="attributes">
+                <attribute name="string">Reporting Manager</attribute>
+            </field>
+
+
+            <field name="birthday" position="attributes">
+                <attribute name="required">1</attribute>
+            </field>
+
+
+            <field name="department_id" position="after">
+                <field name="date_of_joining"/>
+                <label for="employee_eligible_period"/>
+                <div class="o_row" name="employee_eligible_period">
+                    <field name="employee_eligible_period"/>
+                    <span>/ month</span>
+                </div>
+<!--                <field name="eligible_period"/>-->
+                <field name="leave_eligible_date"/>
+                <field name="Employee_one_year_completion" readonly="1" force_save="1" invisible="1"/>
+            </field>
+
+            <field name="coach_id" position="after">
+                <field name="carry_over"/>
+            </field>
+            <xpath expr="//page[@name='personal_information']" position="after">
+                <page string="Carry Over Information" attrs="{'invisible':[('carry_over','=',False)]}">
+                    <group string="Annual Leave Carry Over Information">
+                        <group>
+                            <field name="actual_carry_over_leave"/>
+                            <field name="approved_leave"/>
+                            <field name="internal_leave_deduction"/>
+                        </group>
+                        <group>
+                            <field name="actual_carry_over_remarks"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <menuitem id="menu_payroll_employee"
+              name="Employees"
+              parent="om_hr_payroll.menu_hr_payroll_root"
+              sequence="15"/>
+
+    <menuitem id="menu_hr_employee"
+              name="Employees"
+              action="hr.open_view_employee_list_my"
+              parent="menu_payroll_employee"
+              sequence="10"/>
+
+    <menuitem id="hr_menu_contract"
+              name="Contracts"
+              action="hr_contract.action_hr_contract"
+              parent="menu_payroll_employee"
+              sequence="20"
+              groups="hr_contract.group_hr_contract_manager"/>
+
+
+</odoo>

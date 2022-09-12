@@ -1,0 +1,233 @@
+<odoo>
+    <data>
+        <template id="sale_order">
+            <t t-call='website.layout'>
+                <div class="wrap" id="wrapwrap">
+                    <button type="submit" class="btn btn-primary">
+                        <a class="class-name" t-attf-href="/sale/saleorder/{{slug(object)}}">
+                            Create New
+                        </a>
+                    </button>
+                    <table class="table table-sm table-bordered container mt-4" style="padding:20px 30px;" width="100%">
+                        <thead class="bg-warning">
+                            <tr>
+                                <th valign="middle" align="center"
+                                    class="padding_all tbottom ttop text-center">
+                                    <strong>Name</strong>
+                                </th>
+                                <th valign="middle" align="center"
+                                    class="padding_all tbottom ttop text-center">
+                                    <strong>Supplier</strong>
+                                </th>
+                                <th valign="middle" align="center"
+                                    class="padding_all tbottom ttop text-center">
+                                    <strong>Sales Person</strong>
+                                </th>
+                                <th valign="middle" align="center"
+                                    class="padding_all tbottom ttop text-center">
+                                    <strong>Amount</strong>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="sale_t body">
+                            <t t-foreach="objects" t-as="object">
+                                <tr>
+                                    <td class="padding_all tbottom ttop text-center">
+                                        <a class="class-name" t-attf-href="/sale/saleorder/{{slug(object)}}">
+                                            Call By Object:
+                                            <span t-esc="object.display_name" t-att-sale-id="object.id"/>
+                                        </a>
+                                    </td>
+                                    <td class="padding_all tbottom ttop text-center">
+                                        <span t-esc="object.partner_id.name"/>
+                                    </td>
+                                    <td class="padding_all tbottom ttop text-center">
+                                        <span t-esc="object.user_id.name"/>
+                                    </td>
+                                    <td class="padding_all tbottom ttop text-center">
+                                        <span t-esc="object.amount_total"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </template>
+
+        <template id="emplyoee_list">
+            <t t-call='website.layout'>
+                <div id="wrap">
+                    <form role="form" class="container mt-4" action="/employee/employee_create" method="POST">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="btn btn-primary" action="/employee/employee_create">Create New
+                        </button>
+                    </form>
+                    <table class="table table-hover table-bordered container mt-4" style="padding:20px 30px;"
+                           width="100%">
+                        <thead class="bg-warning">
+                            <tr>
+                                <th valign="middle" align="center"
+                                    class="padding_all tbottom ttop text-center">
+                                    <strong>Name</strong>
+                                </th>
+                                <th valign="middle" align="center"
+                                    class="padding_all tbottom ttop text-center">
+                                    <strong>Email</strong>
+                                </th>
+                                <th valign="middle" align="center"
+                                    class="padding_all tbottom ttop text-center">
+                                    <strong>Phone</strong>
+                                </th>
+                                <th valign="middle" align="center"
+                                    class="padding_all tbottom ttop text-center">
+                                    <strong>Manager</strong>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="sale_t body">
+                            <t t-foreach="emp_list" t-as="emp">
+                                <tr>
+                                    <td class="padding_all tbottom ttop text-left">
+                                        <a class="class-name" t-attf-href="/emp/{{slug(emp)}}">
+                                            <span t-esc="emp.name" t-att-employee-id="emp.id"/>
+                                        </a>
+                                    </td>
+                                    <td class="padding_all tbottom ttop text-let">
+                                        <span t-esc="emp.work_email"/>
+                                    </td>
+                                    <td class="padding_all tbottom ttop text-right">
+                                        <span t-esc="emp.work_phone"/>
+                                    </td>
+                                    <td class="padding_all tbottom ttop text-left">
+                                        <span t-esc="emp.coach_id.name"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </template>
+
+        <template id="employee_card">
+            <t t-call='website.layout'>
+                <div class="wrap" id="wrapwrap">
+                    <div class="card p-4">
+                        <form role="form" class="container" action="/create/new_employee" method="POST">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="form-group">
+                                <label for="employee_name">Name</label>
+                                <input type="name" class="form-control" name="name" id="name"
+                                       placeholder="Employee Name"
+                                       required="required"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Email</label>
+                                <input type="email" class="form-control" name="work_email" id="work_email"
+                                       placeholder="Enter email" required="required"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Phone</label>
+                                <input type="phone" class="form-control" name="work_phone" id="work_phone"
+                                       placeholder="Phone Number" required="required"/>
+                            </div>
+                            <div class="w-100 row">
+                                <div class="form-group col-6">
+                                    <label for="examplecountry">Country</label>
+                                    <select name="country" id="country" t-attf-class="form-control">
+                                        <t t-foreach="country" t-as="name">
+                                            <option>
+                                                <span t-esc="name.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="examplestate">State</label>
+                                    <select name="state" id="state" t-attf-class="form-control">
+                                        <t t-foreach="state" t-as="name">
+                                            <option>
+                                                <span t-esc="name.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <template id="employee_profile">
+            <t t-call='website.layout'>
+                <div class="wrap" id="wrapwrap">
+                    <div class="container">
+                        <t t-foreach="select_emp" t-as="obj">
+                            <div class="col-6 card mb-3 mt-4 p-4 justify-content-around">
+                                <div class="row no-gutters">
+                                    <div class="col-md-6 border-right">
+                                        <img class="img img-responsive border rounded-circle"
+                                             t-if="obj.image_1920" t-att-src="image_data_uri(obj.image_1920)"
+                                             alt="Employee Image"/>
+                                    </div>
+                                    <div class="col-md-6 bg-info justify-center rounded">
+                                        <div class="card-body">
+                                            <h5 class="card-title">
+                                                <t t-esc="obj.name"/>
+                                            </h5>
+                                            <p class="card-text">
+                                                Id :
+                                                <t t-esc="obj.emp_code"/>
+                                                <br/>
+                                                <br/>
+                                                Phone :
+                                                <t t-esc="obj.work_phone"/>
+                                                <br/>
+                                                <br/>
+                                                Email :
+                                                <t t-esc="obj.work_email"/>
+                                                <br/>
+                                                <br/>
+                                                Department :
+                                                <t t-esc="obj.department_id.name"/>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card mb-3"></div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <!-- === Services Page === -->
+        <template id="add_value">
+            <t t-call="website.layout">
+                <div id="wrap">
+                    <div class="container oe_add_value">
+                        <div class="form-group">
+                            <label for="add1">Number 1</label>
+                            <input type="number" class="form-control" id="add1" name="add1"
+                                   placeholder="Enter Number 1"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="add2">Number 2</label>
+                            <input type="number" class="form-control" id="add2" name="add2"
+                                   placeholder="Enter Number 2"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="sum">Total</label>
+                            <input type="number" class="form-control" id="sum" name="sum" readonly="readonly"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary addValueBtn">Submit</button>
+                    </div>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>

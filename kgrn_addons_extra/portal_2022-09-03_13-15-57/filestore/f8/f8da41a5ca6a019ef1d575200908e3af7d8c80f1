@@ -1,0 +1,2799 @@
+
+/******************************************************************
+*  Filepath: /web/static/tests/legacy/helpers/test_utils_file.js  *
+*  Bundle: web.assets_tests                                       *
+*  Lines: 158                                                     *
+******************************************************************/
+odoo.define('web.test_utils_file', function () {
+"use strict";
+
+/**
+ * FILE Test Utils
+ *
+ * This module defines various utility functions to help simulate events with
+ * files, such as drag-and-drop.
+ *
+ * Note that all methods defined in this module are exported in the main
+ * testUtils file.
+ */
+
+
+//------------------------------------------------------------------------------
+// Private functions
+//------------------------------------------------------------------------------
+
+/**
+ * Create a fake object 'dataTransfer', linked to some files, which is passed to
+ * drag and drop events.
+ *
+ * @param {Object[]} files
+ * @returns {Object}
+ */
+function _createFakeDataTransfer(files) {
+    return {
+        dropEffect: 'all',
+        effectAllowed: 'all',
+        files,
+        getData: function () {
+            return files;
+        },
+        items: [],
+        types: ['Files'],
+    };
+}
+
+//------------------------------------------------------------------------------
+// Public functions
+//------------------------------------------------------------------------------
+
+/**
+ * Create a file object, which can be used for drag-and-drop.
+ *
+ * @param {Object} data
+ * @param {string} data.name
+ * @param {string} data.content
+ * @param {string} data.contentType
+ * @returns {Promise<Object>} resolved with file created
+ */
+function createFile(data) {
+    // Note: this is only supported by Chrome, and does not work in Incognito mode
+    return new Promise(function (resolve, reject) {
+        var requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
+        if (!requestFileSystem) {
+            throw new Error('FileSystem API is not supported');
+        }
+        requestFileSystem(window.TEMPORARY, 1024 * 1024, function (fileSystem) {
+            fileSystem.root.getFile(data.name, { create: true }, function (fileEntry) {
+                fileEntry.createWriter(function (fileWriter) {
+                    fileWriter.onwriteend = function (e) {
+                        fileSystem.root.getFile(data.name, {}, function (fileEntry) {
+                            fileEntry.file(function (file) {
+                                resolve(file);
+                            });
+                        });
+                    };
+                    fileWriter.write(new Blob([ data.content ], { type: data.contentType }));
+                });
+            });
+        });
+    });
+}
+
+/**
+ * Drag a file over a DOM element
+ *
+ * @param {$.Element} $el
+ * @param {Object} file must have been created beforehand (@see createFile)
+ */
+function dragoverFile($el, file) {
+    var ev = new Event('dragover', { bubbles: true });
+    Object.defineProperty(ev, 'dataTransfer', {
+        value: _createFakeDataTransfer(file),
+    });
+    $el[0].dispatchEvent(ev);
+}
+
+/**
+ * Drop a file on a DOM element.
+ *
+ * @param {$.Element} $el
+ * @param {Object} file must have been created beforehand (@see createFile)
+ */
+function dropFile($el, file) {
+    var ev = new Event('drop', { bubbles: true, });
+    Object.defineProperty(ev, 'dataTransfer', {
+        value: _createFakeDataTransfer([file]),
+    });
+    $el[0].dispatchEvent(ev);
+}
+
+/**
+ * Drop some files on a DOM element.
+ *
+ * @param {$.Element} $el
+ * @param {Object[]} files must have been created beforehand (@see createFile)
+ */
+function dropFiles($el, files) {
+    var ev = new Event('drop', { bubbles: true, });
+    Object.defineProperty(ev, 'dataTransfer', {
+        value: _createFakeDataTransfer(files),
+    });
+    $el[0].dispatchEvent(ev);
+}
+
+/**
+ * Set files in a file input
+ *
+ * @param {DOM.Element} el
+ * @param {Object[]} files must have been created beforehand
+ *   @see testUtils.file.createFile
+ */
+function inputFiles(el, files) {
+    // could not use _createFakeDataTransfer as el.files assignation will only
+    // work with a real FileList object.
+    const dataTransfer = new window.DataTransfer();
+    for (const file of files) {
+        dataTransfer.items.add(file);
+    }
+    el.files = dataTransfer.files;
+    /**
+     * Changing files programatically is not supposed to trigger the event but
+     * it does in Chrome versions before 73 (which is on runbot), so in that
+     * case there is no need to make a manual dispatch, because it would lead to
+     * the files being added twice.
+     */
+    const versionRaw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
+    const chromeVersion = versionRaw ? parseInt(versionRaw[2], 10) : false;
+    if (!chromeVersion || chromeVersion >= 73) {
+        el.dispatchEvent(new Event('change'));
+    }
+}
+
+//------------------------------------------------------------------------------
+// Exposed API
+//------------------------------------------------------------------------------
+
+return {
+    createFile: createFile,
+    dragoverFile: dragoverFile,
+    dropFile: dropFile,
+    dropFiles,
+    inputFiles,
+};
+
+});
+;
+
+/*********************************************************************
+*  Filepath: /mail/static/tests/tours/mail_channel_as_guest_tour.js  *
+*  Bundle: web.assets_tests                                          *
+*  Lines: 37                                                         *
+*********************************************************************/
+odoo.define('@mail/../tests/tours/mail_channel_as_guest_tour', async function (require) {
+'use strict';
+let __exports = {};
+/** @odoo-module **/
+
+const tour = require('web_tour.tour');
+
+tour.register('mail/static/tests/tours/mail_channel_as_guest_tour.js', {
+    test: true,
+}, [{
+    content: "Click join",
+    trigger: '.o_WelcomeView_joinButton',
+    extraTrigger: '.o_ThreadView',
+}, {
+    content: "Check that we are on channel page",
+    trigger: '.o_ThreadView',
+    run() {
+        if (!window.location.pathname.startsWith('/discuss/channel')) {
+            console.error('Clicking on join button did not redirect to channel page');
+        }
+        // Wait for modules to be loaded or failed for the next step
+        odoo.__DEBUG__.didLogInfo.then(() => {
+            const { missing, failed, unloaded } = odoo.__DEBUG__.jsModules;
+            if ([missing, failed, unloaded].some(arr => arr.length)) {
+                console.error("Couldn't load all JS modules.", JSON.stringify({ missing, failed, unloaded }));
+            }
+            document.body.classList.add('o_mail_channel_as_guest_tour_modules_loaded');
+        });
+    },
+    extraTrigger: '.o_mail_channel_as_guest_tour_modules_loaded',
+}, {
+    content: "Wait for all modules loaded check in previous step",
+    trigger: '.o_mail_channel_as_guest_tour_modules_loaded',
+}]);
+
+return __exports;
+});
+;
+
+/***********************************************************************
+*  Filepath: /mail/static/tests/tours/mail_full_composer_test_tour.js  *
+*  Bundle: web.assets_tests                                            *
+*  Lines: 92                                                           *
+***********************************************************************/
+odoo.define('@mail/../tests/tours/mail_full_composer_test_tour', async function (require) {
+'use strict';
+let __exports = {};
+/** @odoo-module **/
+
+const {
+    createFile,
+    inputFiles,
+} = require('web.test_utils_file');
+
+const tour = require('web_tour.tour');
+
+/**
+ * This tour depends on data created by python test in charge of launching it.
+ * It is not intended to work when launched from interface. It is needed to test
+ * an action (action manager) which is not possible to test with QUnit.
+ * @see mail/tests/test_mail_full_composer.py
+ */
+tour.register('mail/static/tests/tours/mail_full_composer_test_tour.js', {
+    test: true,
+}, [{
+    content: "Click on Send Message",
+    trigger: '.o_ChatterTopbar_buttonSendMessage',
+}, {
+    content: "Write something in composer",
+    trigger: '.o_ComposerTextInput_textarea',
+    run: 'text blahblah',
+}, {
+    content: "Add one file in composer",
+    trigger: '.o_Composer_buttonAttachment',
+    async run() {
+        const file = await createFile({
+            content: 'hello, world',
+            contentType: 'text/plain',
+            name: 'text.txt',
+        });
+        inputFiles(
+            document.querySelector('.o_FileUploader_input'),
+            [file]
+        );
+    },
+}, {
+    content: "Open full composer",
+    trigger: '.o_Composer_buttonFullComposer',
+    extra_trigger: '.o_AttachmentCard:not(.o-isUploading)' // waiting the attachment to be uploaded
+}, {
+    content: "Check the earlier provided attachment is listed",
+    trigger: '.o_AttachmentCard[title="text.txt"]',
+    run() {},
+}, {
+    content: "Check subject is autofilled",
+    trigger: 'input[name="subject"]',
+    run() {
+        const subjectValue = document.querySelector('input[name="subject"]').value;
+        if (subjectValue !== "Re: Test User") {
+            console.error(
+                `Full composer should have "Re: Test User" in subject input (actual: ${subjectValue})`
+            );
+        }
+    },
+}, {
+    content: "Check composer content is kept",
+    trigger: '.oe_form_field[name="body"]',
+    run() {
+        const bodyContent = document.querySelector('.oe_form_field[name="body"]').textContent;
+        if (!bodyContent.includes("blahblah")) {
+            console.error(
+                `Full composer should contain text from small composer ("blahblah") in body input (actual: ${bodyContent})`
+            );
+        }
+    },
+}, {
+    content: "Open templates",
+    trigger: '.o_field_widget[name="template_id"] input',
+}, {
+    content: "Check a template is listed",
+    in_modal: false,
+    trigger: '.ui-autocomplete .ui-menu-item a:contains("Test template")',
+    run() {},
+}, {
+    content: "Send message",
+    trigger: '.o_mail_send',
+}, {
+    content: "Check message is shown",
+    trigger: '.o_Message:contains("blahblah")',
+}, {
+    content: "Check message contains the attachment",
+    trigger: '.o_Message .o_AttachmentCard_filename:contains("text.txt")',
+}]);
+
+return __exports;
+});
+;
+
+/***************************************************
+*  Filepath: /portal/static/tests/tours/portal.js  *
+*  Bundle: web.assets_tests                        *
+*  Lines: 22                                       *
+***************************************************/
+odoo.define('portal.tour', function (require) {
+'use strict';
+
+var tour = require("web_tour.tour");
+
+tour.register('portal_load_homepage', {
+    test: true,
+    url: '/my',
+},
+    [
+        {
+            content: "Check portal is loaded",
+            trigger: 'a[href*="/my/account"]:contains("Edit"):first',
+        },
+        {
+            content: "Load my account details",
+            trigger: 'input[value="Joel Willis"]'
+        }
+    ]
+);
+
+});
+;
+
+/*******************************************************************************
+*  Filepath: /account/static/tests/tours/account_dashboard_setup_bar_tests.js  *
+*  Bundle: web.assets_tests                                                    *
+*  Lines: 42                                                                   *
+*******************************************************************************/
+odoo.define('account.dashboard.setup.tour', function (require) {
+    "use strict";
+
+    var core = require('web.core');
+    var tour = require('web_tour.tour');
+
+    var _t = core._t;
+
+    tour.register('account_render_report', {
+        test: true,
+        url: '/web',
+    }, [tour.stepUtils.showAppsMenuItem(),
+    {
+        id: 'account_menu_click',
+        trigger: '.o_app[data-menu-xmlid="account.menu_finance"]',
+        position: 'bottom',
+    }, {
+        trigger: '.o_data_row:first',
+        extra_trigger: '.breadcrumb',
+    }, {
+        trigger: '.o_control_panel button:contains("' + _t('Print') + '")',
+    }, {
+        trigger: '.o_control_panel .dropdown-menu a:contains("' + _t('Invoices without Payment') + '")',
+    }, {
+        trigger: 'iframe .o_report_layout_standard h2',
+        content: 'Primary color is correct',
+        run: function () {
+            if (this.$anchor.css('color') !== "rgb(18, 52, 86)") {
+                console.error('The primary color should be the one set on the company.');
+            }
+        },
+    }, {
+        trigger: 'iframe .o_report_layout_standard #informations div strong',
+        content: 'Secondary color is correct',
+        run: function () {
+            if (this.$anchor.css('color') !== "rgb(120, 145, 1)") {
+                console.error('The secondary color should be the one set on the company.');
+            }
+        },
+    }
+        ]);
+});
+;
+
+/*************************************************************
+*  Filepath: /account/static/tests/tours/tax_group_tests.js  *
+*  Bundle: web.assets_tests                                  *
+*  Lines: 129                                                *
+*************************************************************/
+odoo.define('@account/../tests/tours/tax_group_tests', async function (require) {
+'use strict';
+let __exports = {};
+/** @odoo-module alias=account.tax.group.tour.tests */
+"use strict";
+
+const tour = require('web_tour.tour');
+
+tour.register('account_tax_group', {
+    test: true,
+    url: "/web",
+}, [tour.stepUtils.showAppsMenuItem(),
+    {
+        content: "Go to Invoicing",
+        trigger: '.o_app[data-menu-xmlid="account.menu_finance"]',
+        edition: 'community',
+    },
+    {
+        content: "Go to Accounting",
+        trigger: '.o_app[data-menu-xmlid="account_accountant.menu_accounting"]',
+        edition: 'enterprise',
+    },
+    {
+        content: "Go to Vendors",
+        trigger: 'a:contains("Vendors")',
+    },
+    {
+        content: "Go to Bills",
+        trigger: 'span:contains("Bills")',
+    },
+    {
+        extra_trigger: '.breadcrumb:contains("Bills")',
+        content: "Create new bill",
+        trigger: '.o_list_button_add',
+    },
+    // Set a vendor
+    {
+        content: "Add vendor",
+        trigger: 'div.o_field_widget.o_field_many2one[name="partner_id"] div input',
+        run: 'text Azure Interior',
+    },
+    {
+        content: "Valid vendor",
+        trigger: '.ui-menu-item a:contains("Azure Interior")',
+    },
+    // Add First product
+    {
+        content: "Add items",
+        trigger: 'div[name="invoice_line_ids"] .o_field_x2many_list_row_add a:contains("Add a line")',
+    },
+    {
+        content: "Select input",
+        trigger: 'div[name="invoice_line_ids"] .o_list_view .o_selected_row .o_list_many2one:first input',
+    },
+    {
+        content: "Type item",
+        trigger: 'div[name="invoice_line_ids"] .o_list_view .o_selected_row .o_list_many2one:first input',
+        run: "text Large Desk",
+    },
+    {
+        content: "Valid item",
+        trigger: '.ui-menu-item-wrapper:contains("Large Desk")',
+    },
+    // Save account.move
+    {
+        content: "Save the account move",
+        trigger: '.o_form_button_save',
+    },
+    // Edit account.move
+    {
+        content: "Edit the account move",
+        trigger: '.o_form_button_edit',
+    },
+    // Edit tax group amount
+    {
+        content: "Edit tax group amount",
+        trigger: '.o_tax_group_edit',
+    },
+    {
+        content: "Modify the input value",
+        trigger: '.o_tax_group_edit_input input',
+        run: function (actions) {
+            $('.o_tax_group_edit_input input').val(200);
+            $('.o_tax_group_edit_input input').select();
+            $('.o_tax_group_edit_input input').blur();
+        },
+    },
+    // Check new value for total (with modified tax_group_amount).
+    {
+        content: "Valid total amount",
+        trigger: 'span[name="amount_total"]:contains("1,499.00")',
+    },
+    // Modify the quantity of the object
+    {
+        content: "Select item quantity",
+        trigger: 'div[name="invoice_line_ids"] .o_list_view tbody tr.o_data_row .o_list_number[title="1.00"]',
+    },
+    {
+        content: "Change item quantity",
+        trigger: 'div[name="invoice_line_ids"] .o_list_view tbody tr.o_data_row .o_list_number[title="1.00"] input',
+        run: 'text 2',
+    },
+    {
+        content: "Valid the new value",
+        trigger: 'div[name="invoice_line_ids"] .o_list_view tbody tr.o_data_row .o_list_number[title="1.00"] input',
+        run: function (actions) {
+            let keydownEvent = jQuery.Event('keydown');
+            keydownEvent.which = 13;
+            this.$anchor.trigger(keydownEvent);
+        },
+    },
+    // Save form
+    {
+        content: "Save the account move",
+        trigger: '.o_form_button_save',
+    },
+    // Check new tax group value
+    {
+        content: "Check new value of tax group",
+        trigger: '.o_tax_group_amount_value:contains("389.70")',
+    },
+]);
+
+return __exports;
+});
+
+odoo.define(`account.tax.group.tour.tests`, async function(require) {
+                        return require('@account/../tests/tours/tax_group_tests')[Symbol.for("default")];
+                        });
+;
+
+/*************************************************************************
+*  Filepath: /crm/static/tests/tours/crm_email_and_phone_propagation.js  *
+*  Bundle: web.assets_tests                                              *
+*  Lines: 68                                                             *
+*************************************************************************/
+odoo.define('crm.crm_email_and_phone_propagation', function (require) {
+    'use strict';
+
+    const tour = require('web_tour.tour');
+
+    tour.register('crm_email_and_phone_propagation_edit_save', {
+        test: true,
+        url: '/web',
+    }, [
+        tour.stepUtils.showAppsMenuItem(),
+        {
+            trigger: '.o_app[data-menu-xmlid="crm.crm_menu_root"]',
+            content: 'open crm app',
+        }, {
+            trigger: '.o_kanban_record .o_kanban_record_title span:contains(Test Lead Propagation)',
+            content: 'Open the first lead',
+            run: 'click',
+        }, {
+            trigger: '.o_form_button_edit',
+            extra_trigger: '.o_lead_opportunity_form.o_form_readonly',
+            content: 'Edit the lead',
+            run: 'click',
+        }, {
+            trigger: '.o_form_button_save',
+            extra_trigger: '.o_form_editable input[name="email_from"]',
+            content: 'Save the lead',
+            run: 'click',
+        }, {
+            trigger: '.o_form_readonly',
+        },
+    ]);
+
+    tour.register('crm_email_and_phone_propagation_remove_email_and_phone', {
+        test: true,
+        url: '/web',
+    }, [
+        tour.stepUtils.showAppsMenuItem(),
+        {
+            trigger: '.o_app[data-menu-xmlid="crm.crm_menu_root"]',
+            content: 'open crm app',
+        }, {
+            trigger: '.o_kanban_record .o_kanban_record_title span:contains(Test Lead Propagation)',
+            content: 'Open the first lead',
+            run: 'click',
+        }, {
+            trigger: '.o_form_button_edit',
+            content: 'Edit the lead',
+            run: 'click',
+        }, {
+            trigger: '.o_form_editable input[name="email_from"]',
+            extra_trigger: '.o_form_editable input[name="phone"]',
+            content: 'Remove the email and the phone',
+            run: function () {
+                $('input[name="email_from"]').val('').trigger("change");
+                $('input[name="phone"]').val('').trigger("change");
+            },
+        }, {
+            trigger: '.o_form_button_save',
+            // wait the the warning message to be visible
+            extra_trigger: '.o_form_sheet_bg .fa-exclamation-triangle:not(.o_invisible_modifier)',
+            content: 'Save the lead',
+            run: 'click',
+        }, {
+            trigger: '.o_form_readonly',
+        },
+    ]);
+
+});
+;
+
+/***********************************************************
+*  Filepath: /crm/static/tests/tours/crm_forecast_tour.js  *
+*  Bundle: web.assets_tests                                *
+*  Lines: 104                                              *
+***********************************************************/
+odoo.define('@crm/../tests/tours/crm_forecast_tour', async function (require) {
+'use strict';
+let __exports = {};
+/** @odoo-module */
+const tour = require('web_tour.tour');
+const today = moment();
+
+tour.register('crm_forecast', {
+    test: true,
+    url: "/web",
+}, [
+    tour.stepUtils.showAppsMenuItem(),
+    {
+        trigger: ".o_app[data-menu-xmlid='crm.crm_menu_root']",
+        content: "open crm app",
+    }, {
+        trigger: '.dropdown-toggle[data-menu-xmlid="crm.crm_menu_report"]',
+        content: 'Open Reporting menu',
+        run: 'click',
+    }, {
+        trigger: '.dropdown-item[data-menu-xmlid="crm.crm_menu_forecast"]',
+        content: 'Open Forecast menu',
+        run: 'click',
+    }, {
+        trigger: '.o_column_quick_create:contains(Add next month)',
+        content: 'Wait page loading'
+    }, {
+        trigger: ".o-kanban-button-new",
+        content: "click create",
+        run: 'click',
+    }, {
+        trigger: "input[name=name]",
+        content: "complete name",
+        run: "text Test Opportunity 1",
+    }, {
+        trigger: "div[name=expected_revenue] > input",
+        content: "complete expected revenue",
+        run: "text 999999",
+    }, {
+        trigger: "button.o_kanban_edit",
+        content: "edit lead",
+    }, {
+        trigger: "input[name=date_deadline]",
+        content: "complete expected closing",
+        run: `text ${today.format("MM/DD/YYYY")}`,
+    }, {
+        trigger: "input[name=date_deadline]",
+        content: "click to make the datepicker disappear",
+        run: "click"
+    }, {
+        trigger: "body:not(:has(div.bootstrap-datetimepicker-widget))",
+        content: "wait for date_picker to disappear",
+        run: function () {},
+    }, {
+        trigger: '.o_back_button',
+        content: 'navigate back to the kanban view',
+        position: "bottom",
+        run: "click"
+    }, {
+        trigger: ".o_kanban_record .o_kanban_record_title:contains('Test Opportunity 1')",
+        content: "move to the next month",
+        run: function (actions) {
+            const undefined_groups = $('.o_column_title:contains("Undefined")').length;
+            actions.drag_and_drop(` .o_opportunity_kanban .o_kanban_group:eq(${1 + undefined_groups})`, this.$anchor);
+        }
+    }, {
+        trigger: ".o_kanban_record .o_kanban_record_title:contains('Test Opportunity 1')",
+        content: "edit lead",
+        run: "click"
+    }, {
+        trigger: `span[name=date_deadline]:contains("${moment(today).add(2, 'months').startOf('month').subtract(1, 'days').format("MM/DD/YYYY")}")`,
+        content: "edit datetime",
+        position: "bottom",
+        run: "click"
+    }, {
+        trigger: "input[name=date_deadline]",
+        content: "complete expected closing",
+        run: `text ${moment(today).add(5, 'months').startOf('month').subtract(1, 'days').format("MM/DD/YYYY")}`
+    }, {
+        trigger: "body:not(:has(div.bootstrap-datetimepicker-widget))",
+        content: "wait for date_picker to disappear",
+        run: function () {},
+    }, {
+        trigger: "input[name=probability]",
+        content: "max out probability",
+        run: "text 100"
+    }, {
+        trigger: '.o_back_button',
+        content: 'navigate back to the kanban view',
+        position: "bottom",
+        run: "click"
+    }, {
+        trigger: '.o_kanban_add_column',
+        content: "add next month",
+        run: "click"
+    }, {
+        trigger: ".o_kanban_record:contains('Test Opportunity 1'):contains('Won')",
+        content: "assert that the opportunity has the Won banner",
+        run: function () {},
+    }
+]);
+
+return __exports;
+});
+;
+
+/********************************************************
+*  Filepath: /crm/static/tests/tours/crm_rainbowman.js  *
+*  Bundle: web.assets_tests                             *
+*  Lines: 81                                            *
+********************************************************/
+odoo.define('@crm/../tests/tours/crm_rainbowman', async function (require) {
+'use strict';
+let __exports = {};
+/** @odoo-module **/
+
+    const tour = require('web_tour.tour');
+
+    tour.register('crm_rainbowman', {
+        test: true,
+        url: "/web",
+    }, [
+        tour.stepUtils.showAppsMenuItem(),
+        {
+            trigger: ".o_app[data-menu-xmlid='crm.crm_menu_root']",
+            content: "open crm app",
+        }, {
+            trigger: ".o-kanban-button-new",
+            content: "click create",
+        }, {
+            trigger: "input[name=name]",
+            content: "complete name",
+            run: "text Test Lead 1",
+        }, {
+            trigger: "div[name=expected_revenue] > input",
+            content: "complete expected revenue",
+            run: "text 999999997",
+        }, {
+            trigger: "button.o_kanban_add",
+            content: "create lead",
+        }, {
+            trigger: ".o_kanban_record .o_kanban_record_title:contains('Test Lead 1')",
+            content: "move to won stage",
+            run: "drag_and_drop .o_opportunity_kanban .o_kanban_group:eq(3) "
+        }, {
+            trigger: ".o_reward_rainbow",
+            extra_trigger: ".o_reward_rainbow",
+            run: function () {} // check rainbowman is properly displayed
+        }, {
+            trigger: ".o-kanban-button-new",
+            content: "create second lead",
+        }, {
+            trigger: "input[name=name]",
+            content: "complete name",
+            run: "text Test Lead 2",
+        }, {
+            trigger: "div[name=expected_revenue] > input",
+            content: "complete expected revenue",
+            run: "text 999999998",
+        }, {
+            trigger: "button.o_kanban_add",
+            content: "create lead",
+        }, {
+            trigger: ".o_kanban_record .o_kanban_record_title:contains('Test Lead 2')",
+            run: function () {} // wait for the record to be properly created
+        }, {
+            // move first test back to new stage to be able to test rainbowman a second time
+            trigger: ".o_kanban_record .o_kanban_record_title:contains('Test Lead 1')",
+            content: "move back to new stage",
+            run: "drag_and_drop .o_opportunity_kanban .o_kanban_group:eq(0) "
+        }, {
+            trigger: ".o_kanban_record .o_kanban_record_title:contains('Test Lead 2')",
+            content: "click on second lead",
+        }, {
+            trigger: ".o_statusbar_status button[data-value='4']",
+            content: "move lead to won stage",
+        }, {
+            trigger: ".o_statusbar_status button[data-value='1']",
+            extra_trigger: ".o_reward_rainbow",
+            content: "move lead to previous stage & rainbowman appears",
+        }, {
+            trigger: "button[name=action_set_won_rainbowman]",
+            content: "click button mark won",
+        }, {
+            trigger: ".o_menu_brand",
+            extra_trigger: ".o_reward_rainbow",
+            content: "last rainbowman appears",
+        }
+    ]);
+
+return __exports;
+});
+;
+
+/******************************************************************
+*  Filepath: /project/static/tests/tours/project_sharing_tour.js  *
+*  Bundle: web.assets_tests                                       *
+*  Lines: 158                                                     *
+******************************************************************/
+odoo.define('@project/../tests/tours/project_sharing_tour', async function (require) {
+'use strict';
+let __exports = {};
+/** @odoo-module **/
+
+const tour = require('web_tour.tour');
+
+tour.register('project_sharing_tour', {
+    test: true,
+    url: '/web',
+}, [...tour.stepUtils.goToAppSteps("project.menu_main_pm", 'Go to the Project App.'), {
+    // an invisible element cannot be used as a trigger so this small hack is mandatory for the next step
+    trigger: '.o_kanban_record:contains("Project Sharing")',
+    run: function () {
+        this.$anchor.find('.o_dropdown_kanban').css('visibility', 'visible');
+    },
+}, {
+    trigger: '.oe_kanban_global_click :contains("Project Sharing") .o_dropdown_kanban',
+    content: 'Open the project dropdown.'
+}, {
+    trigger: '.o_kanban_record:contains("Project Sharing") .dropdown-menu a:contains("Share")',
+    content: 'Start editing the project.',
+}, {
+    trigger: 'div.o_field_radio[name="access_mode"] > div.o_radio_item > input[data-value="edit"]',
+    content: 'Select "Edit" as Access mode in the "Share Project" wizard.',
+}, {
+    trigger: '.o_field_many2one[name="partner_ids"]',
+    content: 'Select the user portal as collaborator to the "Project Sharing" project.',
+    run: function (actions) {
+        actions.text('Georges', this.$anchor.find('input'));
+    },
+}, {
+    trigger: '.ui-autocomplete a:contains("Georges")',
+    in_modal: false,
+}, {
+    trigger: 'footer > button[name="action_send_mail"]',
+    content: 'Confirm the project sharing with this portal user.',
+}, {
+    trigger: '.o_web_client',
+    content: 'Go to project portal view to select the "Project Sharing" project',
+    run: function () {
+        window.location.href = window.location.origin + '/my/projects';
+    },
+}, {
+    trigger: 'table > tbody > tr a:has(span:contains(Project Sharing))',
+    content: 'Select "Project Sharing" project to go to project sharing feature for this project.',
+}, {
+    trigger: '.o_project_sharing',
+    content: 'Wait the project sharing feature be loaded',
+    run: function () {},
+}, {
+    trigger: 'button.o-kanban-button-new',
+    content: 'Click "Create" button',
+    run: 'click',
+}, {
+    trigger: '.o_kanban_quick_create .o_field_widget[name="name"]',
+    content: 'Create Task',
+    run: 'text Test Create Task',
+}, {
+    trigger: '.o_kanban_quick_create .o_kanban_edit',
+    content: 'Go to the form view of this new task',
+}, {
+    trigger: 'div.o_statusbar_status[name="stage_id"] button[aria-checked="false"]:contains(Done)',
+    content: 'Change the stage of the task.',
+}, {
+    trigger: '.o_portal_chatter_composer_input .o_portal_chatter_composer_body textarea[name="message"]',
+    content: 'Write a message in the chatter of the task',
+    run: 'text I create a new task for testing purpose.',
+}, {
+    trigger: '.o_portal_chatter_composer_input .o_portal_chatter_composer_body button[data-action="/mail/chatter_post"]',
+    content: 'Send the message',
+}, {
+    trigger: 'ol.breadcrumb > li.o_back_button > a:contains(Project Sharing)',
+    content: 'Go back to the kanban view',
+}, {
+    trigger: '.o_filter_menu > button',
+    content: 'click on filter menu in the search view',
+}, {
+    trigger: '.o_filter_menu > .dropdown-menu > .dropdown-item:first-child',
+    content: 'click on the first item in the filter menu',
+}, {
+    trigger: '.o_group_by_menu > button',
+    content: 'click on group by menu in the search view',
+}, {
+    trigger: '.o_group_by_menu > .dropdown-menu > .dropdown-item:first-child',
+    content: 'click on the first item in the group by menu',
+}, {
+    trigger: '.o_favorite_menu > button',
+    content: 'click on the favorite menu in the search view',
+}, {
+    trigger: '.o_favorite_menu .o_add_favorite > button',
+    content: 'click to "save current search" button in favorite menu',
+}, {
+    trigger: 'button.o_switch_view.o_list',
+    content: 'Go to the list view',
+    run: 'click',
+}]);
+
+tour.register('portal_project_sharing_tour', {
+    test: true,
+    url: '/my/projects',
+}, [{
+    trigger: 'table > tbody > tr a:has(span:contains(Project Sharing))',
+    content: 'Select "Project Sharing" project to go to project sharing feature for this project.',
+}, {
+    trigger: '.o_project_sharing',
+    content: 'Wait the project sharing feature be loaded',
+    run: function () {},
+}, {
+    trigger: 'button.o-kanban-button-new',
+    content: 'Click "Create" button',
+    run: 'click',
+}, {
+    trigger: '.o_kanban_quick_create .o_field_widget[name="name"]',
+    content: 'Create Task',
+    run: 'text Test Create Task',
+}, {
+    trigger: '.o_kanban_quick_create .o_kanban_edit',
+    content: 'Go to the form view of this new task',
+}, {
+    trigger: 'div.o_statusbar_status[name="stage_id"] button[aria-checked="false"]:contains(Done)',
+    content: 'Change the stage of the task.',
+}, {
+    trigger: '.o_portal_chatter_composer_input .o_portal_chatter_composer_body textarea[name="message"]',
+    content: 'Write a message in the chatter of the task',
+    run: 'text I create a new task for testing purpose.',
+}, {
+    trigger: '.o_portal_chatter_composer_input .o_portal_chatter_composer_body button[data-action="/mail/chatter_post"]',
+    content: 'Send the message',
+}, {
+    trigger: 'ol.breadcrumb > li.o_back_button > a:contains(Project Sharing)',
+    content: 'Go back to the kanban view',
+}, {
+    trigger: '.o_filter_menu > button',
+    content: 'click on filter menu in the search view',
+}, {
+    trigger: '.o_filter_menu > .dropdown-menu > .dropdown-item:first-child',
+    content: 'click on the first item in the filter menu',
+}, {
+    trigger: '.o_group_by_menu > button',
+    content: 'click on group by menu in the search view',
+}, {
+    trigger: '.o_group_by_menu > .dropdown-menu > .dropdown-item:first-child',
+    content: 'click on the first item in the group by menu',
+}, {
+    trigger: '.o_favorite_menu > button',
+    content: 'click on the favorite menu in the search view',
+}, {
+    trigger: '.o_favorite_menu .o_add_favorite > button',
+    content: 'click to "save current search" button in favorite menu',
+}, {
+    trigger: 'button.o_switch_view.o_list',
+    content: 'Go to the list view',
+    run: 'click',
+}]);
+
+return __exports;
+});
+;
+
+/***********************************************************************
+*  Filepath: /project/static/tests/tours/project_update_tour_tests.js  *
+*  Bundle: web.assets_tests                                            *
+*  Lines: 191                                                          *
+***********************************************************************/
+odoo.define('@project/../tests/tours/project_update_tour_tests', async function (require) {
+'use strict';
+let __exports = {};
+/** @odoo-module **/
+
+const tour = require('web_tour.tour');
+
+function openProjectUpdateAndReturnToTasks(view, viewClass) {
+    return [{
+            trigger: '.o_project_updates_breadcrumb',
+            content: 'Open Project Update from view : ' + view,
+            extra_trigger: "." + viewClass,
+        }, {
+            trigger: ".o-kanban-button-new",
+            content: "Create a new update from project task view : " + view,
+            extra_trigger: '.o_pupdate_kanban',
+        }, {
+            trigger: "button.o_form_button_cancel",
+            content: "Discard project update from project task view : " + view,
+        }, {
+            trigger: ".o_switch_view.o_list",
+            content: "Go to list of project update from view " + view,
+        }, {
+            trigger: '.o_back_button',
+            content: 'Go back to the task view : ' + view,
+            extra_trigger: '.o_list_view',
+        },
+    ];
+}
+
+tour.register('project_update_tour', {
+    test: true,
+    url: '/web',
+},
+[tour.stepUtils.showAppsMenuItem(), {
+    trigger: '.o_app[data-menu-xmlid="project.menu_main_pm"]',
+}, {
+    trigger: '.o-kanban-button-new',
+    extra_trigger: '.o_project_kanban',
+    width: 200,
+}, {
+    trigger: 'input.o_project_name',
+    run: 'text New Project'
+}, {
+    trigger: '.o_open_tasks',
+    run: function (actions) {
+        actions.auto('.modal:visible .btn.btn-primary');
+    },
+}, {
+    trigger: ".o_kanban_project_tasks .o_column_quick_create .input-group",
+    run: function (actions) {
+        actions.text("New", this.$anchor.find("input"));
+    },
+}, {
+    trigger: ".o_kanban_project_tasks .o_column_quick_create .o_kanban_add",
+    auto: true,
+}, {
+    trigger: ".o_kanban_project_tasks .o_column_quick_create .input-group",
+    extra_trigger: '.o_kanban_group',
+    run: function (actions) {
+        actions.text("Done", this.$anchor.find("input"));
+    },
+}, {
+    trigger: ".o_kanban_project_tasks .o_column_quick_create .o_kanban_add",
+    auto: true,
+}, {
+    trigger: '.o-kanban-button-new',
+    extra_trigger: '.o_kanban_group:eq(0)'
+}, {
+    trigger: '.o_kanban_quick_create input.o_field_char[name=name]',
+    extra_trigger: '.o_kanban_project_tasks',
+    run: 'text New task'
+}, {
+    trigger: '.o_kanban_quick_create .o_kanban_add',
+    extra_trigger: '.o_kanban_project_tasks'
+}, {
+    trigger: '.o-kanban-button-new',
+    extra_trigger: '.o_kanban_group:eq(0)'
+}, {
+    trigger: '.o_kanban_quick_create input.o_field_char[name=name]',
+    extra_trigger: '.o_kanban_project_tasks',
+    run: 'text Second task'
+}, {
+    trigger: '.o_kanban_quick_create .o_kanban_add',
+    extra_trigger: '.o_kanban_project_tasks'
+}, {
+    trigger: '.o_kanban_header:eq(1)',
+    run: function () {
+        $('.o_kanban_config.dropdown .dropdown-toggle').eq(1).click();
+    }
+}, {
+    trigger: ".dropdown-item.o_column_edit",
+}, {
+    trigger: ".o_field_widget[name=fold] input",
+}, {
+    trigger: ".modal-footer button",
+}, {
+    trigger: ".o_kanban_record .oe_kanban_content",
+    extra_trigger: '.o_kanban_project_tasks',
+    run: "drag_and_drop .o_kanban_group:eq(1) ",
+}, {
+    trigger: ".o_project_updates_breadcrumb",
+    content: 'Open Updates'
+}, {
+    trigger: ".o_add_milestone a",
+    content: "Add a first milestone"
+}, {
+    trigger: "input.o_field_widget[name=name]",
+    run: 'text New milestone'
+}, {
+    trigger: "input.datetimepicker-input[name=deadline]",
+    run: 'text 12/12/2099'
+}, {
+    trigger: ".modal-footer button"
+}, {
+    trigger: ".o_add_milestone a",
+}, {
+    trigger: "input.o_field_widget[name=name]",
+    run: 'text Second milestone'
+}, {
+    trigger: "input.datetimepicker-input[name=deadline]",
+    run: 'text 12/12/2022'
+}, {
+    trigger: ".modal-footer button"
+}, {
+    trigger: ".o_open_milestone:eq(1) .o_milestone_detail span:eq(0)",
+    extra_trigger: ".o_add_milestone a",
+    run: function () {
+        setTimeout(() => {
+            this.$anchor.click();
+        }, 500);
+    },
+}, {
+    trigger: "input.datetimepicker-input[name=deadline]",
+    run: 'text 12/12/2100'
+}, {
+    trigger: ".modal-footer button"
+}, {
+    trigger: ".o-kanban-button-new",
+    content: "Create a new update"
+}, {
+    trigger: "input.o_field_widget[name=name]",
+    run: 'text New update'
+}, {
+    trigger: ".o_form_button_save"
+}, {
+    trigger: ".o_field_widget[name=description] h1:contains('Activities')",
+    run: function () {},
+}, {
+    trigger: ".o_field_widget[name=description] h3:contains('Milestones')",
+    run: function () {},
+}, {
+    trigger: ".o_field_widget[name=description] div[name='milestone'] ul li:contains('(12/12/2099 => 12/12/2100)')",
+    run: function () {},
+}, {
+    trigger: ".o_field_widget[name=description] div[name='milestone'] ul li span:contains('(due 12/12/2022)')",
+    run: function () {},
+}, {
+    trigger: ".o_field_widget[name=description] div[name='milestone'] ul li span:contains('(due 12/12/2100)')",
+    run: function () {},
+}, {
+    trigger: '.o_back_button',
+    content: 'Go back to the kanban view the project',
+}, {
+    trigger: '.o_switch_view.o_list',
+    content: 'Open List View of Project Updates',
+}, {
+    trigger: '.o_back_button',
+    content: 'Go back to the kanban view the project',
+    extra_trigger: '.o_list_view',
+}, {
+    trigger: '.o_switch_view.o_graph',
+    content: 'Open Graph View of Tasks',
+}, ...openProjectUpdateAndReturnToTasks("Graph", "o_graph_view"), {
+    trigger: '.o_switch_view.o_list',
+    content: 'Open List View of Tasks',
+    extra_trigger: '.o_graph_view',
+}, ...openProjectUpdateAndReturnToTasks("List", "o_list_view"), {
+    trigger: '.o_switch_view.o_pivot',
+    content: 'Open Pivot View of Tasks',
+}, ...openProjectUpdateAndReturnToTasks("Pivot", "o_pivot_view"), {
+    trigger: '.o_switch_view.o_calendar',
+    content: 'Open Calendar View of Tasks',
+}, ...openProjectUpdateAndReturnToTasks("Calendar", "o_calendar_view"), {
+    trigger: '.o_switch_view.o_activity',
+    content: 'Open Activity View of Tasks',
+}, ...openProjectUpdateAndReturnToTasks("Activity", "o_activity_view"),
+]);
+
+return __exports;
+});
+;
+
+/******************************************************************
+*  Filepath: /survey/static/tests/tours/certification_failure.js  *
+*  Bundle: web.assets_tests                                       *
+*  Lines: 109                                                     *
+******************************************************************/
+odoo.define('survey.tour_test_certification_failure', function (require) {
+'use strict';
+
+var SurveyFormWidget = require('survey.form');
+/**
+ * Speed up fade-in fade-out to avoid useless delay in tests.
+ */
+SurveyFormWidget.include({
+    _submitForm: function () {
+        this.fadeInOutDelay = 0;
+        return this._super.apply(this, arguments);
+    }
+});
+
+/**
+ * This tour will test that, for the demo certification allowing 2 attempts, a user can
+ * try and fail twice and will no longer be able to take the certification.
+ */
+
+var tour = require('web_tour.tour');
+
+var failSteps = [{ // Page-1
+    content: "Clicking on Start Certification",
+    trigger: 'button.btn.btn-primary.btn-lg:contains("Start Certification")',
+}, { // Question: Do we sell Acoustic Bloc Screens?
+    content: "Selecting answer 'No'",
+    trigger: 'div.js_question-wrapper:contains("Do we sell Acoustic Bloc Screens") label:contains("No")',
+}, { // Question: Select all the existing products
+    content: "Ticking answer 'Fanta'",
+    trigger: 'div.js_question-wrapper:contains("Select all the existing products") label:contains("Fanta")'
+}, {
+    content: "Ticking answer 'Drawer'",
+    trigger: 'div.js_question-wrapper:contains("Select all the existing products") label:contains("Drawer")'
+}, {
+    content: "Ticking answer 'Conference chair'",
+    trigger: 'div.js_question-wrapper:contains("Select all the existing products") label:contains("Conference chair")'
+}, { // Question: Select all the available customizations for our Customizable Desk
+    content: "Ticking answer 'Color'",
+    trigger: 'div.js_question-wrapper:contains("Select all the available customizations for our Customizable Desk") label:contains("Color")'
+}, {
+    content: "Ticking answer 'Height'",
+    trigger: 'div.js_question-wrapper:contains("Select all the available customizations for our Customizable Desk") label:contains("Height")'
+}, { // Question: How many versions of the Corner Desk do we have?
+    content: "Selecting answer '2'",
+    trigger: 'div.js_question-wrapper:contains("How many versions of the Corner Desk do we have") label:contains("2")',
+}, { // Question: Do you think we have missing products in our catalog? (not rated)
+    content: "Missing products",
+    trigger: 'div.js_question-wrapper:contains("Do you think we have missing products in our catalog") textarea',
+    run: "text I don't know products enough to be able to answer that",
+}, { // Page-2 Question: How much do we sell our Cable Management Box?
+    content: "Selecting answer '$80'",
+    trigger: 'div.js_question-wrapper:contains("How much do we sell our Cable Management Box") label:contains("$80")',
+}, { // Question: Select all the products that sell for $100 or more
+    content: "Ticking answer 'Corner Desk Right Sit'",
+    trigger: 'div.js_question-wrapper:contains("Select all the products that sell for $100 or more") label:contains("Corner Desk Right Sit")'
+}, {
+    content: "Ticking answer 'Desk Combination'",
+    trigger: 'div.js_question-wrapper:contains("Select all the products that sell for $100 or more") label:contains("Desk Combination")'
+}, {
+    content: "Ticking answer 'Office Chair Black'",
+    trigger: 'div.js_question-wrapper:contains("Select all the products that sell for $100 or more") label:contains("Office Chair Black")'
+}, { // Question: What do you think about our prices (not rated)?
+    trigger: 'div.js_question-wrapper:contains("What do you think about our prices") label:contains("Correctly priced")',
+}, { // Page-3 Question: How many days is our money-back guarantee?
+    content: "Inputting answer '60'",
+    trigger: 'div.js_question-wrapper:contains("How many days is our money-back guarantee") input',
+    run: 'text 60'
+}, { // Question: If a customer purchases a product on 6 January 2020, what is the latest day we expect to ship it?
+    content: "Inputting answer '01/06/2020'",
+    trigger: 'div.js_question-wrapper:contains("If a customer purchases a product on 6 January 2020, what is the latest day we expect to ship it") input',
+    run: 'text 01/06/2020'
+}, { // Question: If a customer purchases a 1 year warranty on 6 January 2020, when do we expect the warranty to expire?
+    content: "Inputting answer '01/06/2021 00:00:01'",
+    trigger: 'div.js_question-wrapper:contains("If a customer purchases a 1 year warranty on 6 January 2020, when do we expect the warranty to expire") input',
+    run: 'text 01/06/2021 00:00:01'
+}, { // Question: What day to you think is best for us to start having an annual sale (not rated)?
+    trigger: 'div.js_question-wrapper:contains("What day to you think is best for us to start having an annual sale (not rated)") input',
+}, { // Question: What day and time do you think most customers are most likely to call customer service (not rated)?
+    trigger: 'div.js_question-wrapper:contains("What day and time do you think most customers are most likely to call customer service (not rated)") input',
+}, { // Question: How many chairs do you think we should aim to sell in a year (not rated)?
+    content: "Inputting answer '0'",
+    trigger: 'div.js_question-wrapper:contains("How many chairs do you think we should aim to sell in a year (not rated)") input',
+    run: 'text 0'
+}, {
+    content: "Finish Survey",
+    trigger: 'button[type="submit"]',
+}];
+
+var retrySteps = [{
+    trigger: 'a:contains("Retry")'
+}];
+
+var lastSteps = [{
+    trigger: 'h1:contains("Thank you!")',
+    run: function () {
+        if ($('a:contains("Retry")').length === 0) {
+            $('h1:contains("Thank you!")').addClass('tour_success');
+        }
+    }
+}, {
+    trigger: 'h1.tour_success',
+}];
+
+tour.register('test_certification_failure', {
+    test: true,
+    url: '/survey/start/4ead4bc8-b8f2-4760-a682-1fde8daaaaac'
+}, [].concat(failSteps, retrySteps, failSteps, lastSteps));
+
+});
+;
+
+/******************************************************************
+*  Filepath: /survey/static/tests/tours/certification_success.js  *
+*  Bundle: web.assets_tests                                       *
+*  Lines: 100                                                     *
+******************************************************************/
+odoo.define('survey.tour_test_certification_success', function (require) {
+'use strict';
+
+var SurveyFormWidget = require('survey.form');
+/**
+ * Speed up fade-in fade-out to avoid useless delay in tests.
+ */
+SurveyFormWidget.include({
+    _submitForm: function () {
+        this.fadeInOutDelay = 0;
+        return this._super.apply(this, arguments);
+    }
+});
+
+var tour = require('web_tour.tour');
+
+tour.register('test_certification_success', {
+    test: true,
+    url: '/survey/start/4ead4bc8-b8f2-4760-a682-1fde8daaaaac'
+},
+[{ // Page-1
+        content: "Clicking on Start Certification",
+        trigger: 'button.btn.btn-primary.btn-lg:contains("Start Certification")',
+    }, { // Question: Do we sell Acoustic Bloc Screens?
+        content: "Selecting answer 'Yes'",
+        trigger: 'div.js_question-wrapper:contains("Do we sell Acoustic Bloc Screens") label:contains("Yes")',
+    }, { // Question: Select all the existing products
+        content: "Ticking answer 'Chair floor protection'",
+        trigger: 'div.js_question-wrapper:contains("Select all the existing products") label:contains("Chair floor protection")'
+    }, {
+        content: "Ticking answer 'Drawer'",
+        trigger: 'div.js_question-wrapper:contains("Select all the existing products") label:contains("Drawer")'
+    }, {
+        content: "Ticking answer 'Conference chair'",
+        trigger: 'div.js_question-wrapper:contains("Select all the existing products") label:contains("Conference chair")'
+    }, { // Question: Select all the available customizations for our Customizable Desk
+        content: "Ticking answer 'Color'",
+        trigger: 'div.js_question-wrapper:contains("Select all the available customizations for our Customizable Desk") label:contains("Color")'
+    }, {
+        content: "Ticking answer 'Legs'",
+        trigger: 'div.js_question-wrapper:contains("Select all the available customizations for our Customizable Desk") label:contains("Legs")'
+    }, { // Question: How many versions of the Corner Desk do we have?
+        content: "Selecting answer '2'",
+        trigger: 'div.js_question-wrapper:contains("How many versions of the Corner Desk do we have") label:contains("2")',
+    }, { // Question: Do you think we have missing products in our catalog? (not rated)
+        content: "Missing products",
+        trigger: 'div.js_question-wrapper:contains("Do you think we have missing products in our catalog") textarea',
+        run: "text I think we should make more versions of the customizable desk, it's such an amazing product!",
+    }, { // Page-2 Question: How much do we sell our Cable Management Box?
+        content: "Selecting answer '$80' (wrong one)",
+        trigger: 'div.js_question-wrapper:contains("How much do we sell our Cable Management Box") label:contains("$80")',
+    }, { // Question: Select all the products that sell for $100 or more
+        content: "Ticking answer 'Corner Desk Right Sit'",
+        trigger: 'div.js_question-wrapper:contains("Select all the products that sell for $100 or more") label:contains("Corner Desk Right Sit")'
+    }, {
+        content: "Ticking answer 'Desk Combination'",
+        trigger: 'div.js_question-wrapper:contains("Select all the products that sell for $100 or more") label:contains("Desk Combination")'
+    }, {
+        content: "Ticking answer 'Large Desk'",
+        trigger: 'div.js_question-wrapper:contains("Select all the products that sell for $100 or more") label:contains("Large Desk")'
+    }, { // Question: What do you think about our prices (not rated)?
+        content: "Selecting answer 'Underpriced'",
+        trigger: 'div.js_question-wrapper:contains("What do you think about our prices") label:contains("Underpriced")',
+    }, { // Page-3 Question: How many days is our money-back guarantee?
+        content: "Inputting answer '30'",
+        trigger: 'div.js_question-wrapper:contains("How many days is our money-back guarantee") input',
+        run: 'text 30'
+    }, { // Question: If a customer purchases a product on 6 January 2020, what is the latest day we expect to ship it?
+        content: "Inputting answer '01/08/2020'",
+        trigger: 'div.js_question-wrapper:contains("If a customer purchases a product on 6 January 2020, what is the latest day we expect to ship it") input',
+        run: 'text 01/08/2020'
+    }, { // Question: If a customer purchases a 1 year warranty on 6 January 2020, when do we expect the warranty to expire?
+        content: "Inputting answer '01/07/2021 00:00:01'",
+        trigger: 'div.js_question-wrapper:contains("If a customer purchases a 1 year warranty on 6 January 2020, when do we expect the warranty to expire") input',
+        run: 'text 01/07/2021 00:00:01'
+    }, { // Question: What day to you think is best for us to start having an annual sale (not rated)?
+        content: "Inputting answer '01/01/2021'",
+        trigger: 'div.js_question-wrapper:contains("What day to you think is best for us to start having an annual sale (not rated)") input',
+        run: 'text 01/01/2021'
+    }, { // Question: What day and time do you think most customers are most likely to call customer service (not rated)?
+        content: "Inputting answer '01/01/2021 13:00:01'",
+        trigger: 'div.js_question-wrapper:contains("What day and time do you think most customers are most likely to call customer service (not rated)") input',
+        run: 'text 01/01/2021 13:00:01'
+    }, { // Question: How many chairs do you think we should aim to sell in a year (not rated)?
+        content: "Inputting answer '1000'",
+        trigger: 'div.js_question-wrapper:contains("How many chairs do you think we should aim to sell in a year (not rated)") input',
+        run: 'text 1000'
+    }, {
+        content: "Finish Survey",
+        trigger: 'button[type="submit"]',
+    }, {
+        content: "Thank you",
+        trigger: 'h1:contains("Thank you!")',
+    }, {
+        content: "test passed",
+        trigger: 'div:contains("Congratulations, you have passed the test!")',
+    }
+]);
+
+});
+;
+
+/***************************************************
+*  Filepath: /survey/static/tests/tours/survey.js  *
+*  Bundle: web.assets_tests                        *
+*  Lines: 70                                       *
+***************************************************/
+odoo.define('survey.tour_test_survey', function (require) {
+'use strict';
+
+var tour = require('web_tour.tour');
+
+tour.register('test_survey', {
+    test: true,
+    url: '/survey/start/b137640d-14d4-4748-9ef6-344caaaaaae',
+}, [
+    // Page-1
+    {
+        content: 'Click on Start',
+        trigger: 'button.btn:contains("Start")',
+    }, {
+        content: 'Answer Where do you live',
+        trigger: 'div.js_question-wrapper:contains("Where do you live") input',
+        run: 'text Mordor-les-bains',
+    }, {
+        content: 'Answer Where do you live',
+        trigger: 'div.js_question-wrapper:contains("When is your date of birth") input',
+        run: 'text 05/05/1980',
+    }, {
+        content: 'Answer How frequently do you buy products online',
+        trigger: 'div.js_question-wrapper:contains("How frequently do you buy products online") label:contains("Once a month")',
+    }, {
+        content: 'Answer How many times did you order products on our website',
+        trigger: 'div.js_question-wrapper:contains("How many times did you order products on our website") input',
+        run: 'text 12',
+    }, {
+        content: 'Submit and go to Next Page',
+        trigger: 'button[value="next"]',
+    },
+    // Page-2
+    {
+        content: 'Answer Which of the following words would you use to describe our products (High Quality)',
+        trigger: 'div.js_question-wrapper:contains("Which of the following words would you use to describe our products") label:contains("High quality")',
+    }, {
+        content: 'Answer Which of the following words would you use to describe our products (Good value for money)',
+        trigger: 'div.js_question-wrapper:contains("Which of the following words would you use to describe our products") label:contains("Good value for money")',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (The new layout and design is fresh and up-to-date)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The new layout and design is fresh and up-to-date") td:first',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (It is easy to find the product that I want)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("It is easy to find the product that I want") td:eq(2)',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (The tool to compare the products is useful to make a choice)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The tool to compare the products is useful to make a choice") td:eq(3)',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (The checkout process is clear and secure)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The checkout process is clear and secure") td:eq(2)',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (I have added products to my wishlist)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("I have added products to my wishlist") td:last',
+    }, {
+        content: 'Answer Do you have any other comments, questions, or concerns',
+        trigger: 'div.js_question-wrapper:contains("Do you have any other comments, questions, or concerns") textarea',
+        run: 'text This is great. Really.',
+    }, {
+        content: 'Click Submit and finish the survey',
+        trigger: 'button[value="finish"]',
+    },
+    // Final page
+    {
+        content: 'Thank you',
+        trigger: 'h1:contains("Thank you!")',
+    }
+]);
+
+});
+;
+
+/***********************************************************
+*  Filepath: /survey/static/tests/tours/survey_prefill.js  *
+*  Bundle: web.assets_tests                                *
+*  Lines: 155                                              *
+***********************************************************/
+odoo.define('survey.tour_test_survey_prefill', function (require) {
+'use strict';
+
+var tour = require('web_tour.tour');
+
+tour.register('test_survey_prefill', {
+    test: true,
+    url: '/survey/start/b137640d-14d4-4748-9ef6-344caaaaaae'
+},
+[{      // Page-1
+        trigger: 'button.btn.btn-primary.btn-lg:contains("Start Survey")',
+    }, { // Question: Where do you live ?
+        trigger: 'div.js_question-wrapper:contains("Where do you live ?") input',
+        run: 'text Grand-Rosiere',
+    }, { // Question: When is your date of birth ?
+        trigger: 'div.js_question-wrapper:contains("When is your date of birth ?") input',
+        run: 'text 05/05/1980',
+    }, { // Question: How frequently do you buy products online ?
+        trigger: 'div.js_question-wrapper:contains("How frequently do you buy products online ?") label:contains("Once a week")',
+    }, { // Question: How many times did you order products on our website ?
+        trigger: 'div.js_question-wrapper:contains("How many times did you order products on our website ?") input',
+        run: 'text 42',
+    }, {
+        content: 'Click on Next Page',
+        trigger: 'button[value="next"]',
+    },
+    // Page-2
+    { // Question: Which of the following words would you use to describe our products ?
+        content: 'Answer Which of the following words would you use to describe our products (High Quality)',
+        trigger: 'div.js_question-wrapper:contains("Which of the following words would you use to describe our products") label:contains("High quality")',
+    }, {
+        content: 'Answer Which of the following words would you use to describe our products (Good value for money)',
+        trigger: 'div.js_question-wrapper:contains("Which of the following words would you use to describe our products") label:contains("Good value for money")',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (The new layout and design is fresh and up-to-date)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The new layout and design is fresh and up-to-date") td:first',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (It is easy to find the product that I want)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("It is easy to find the product that I want") td:eq(2)',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (The tool to compare the products is useful to make a choice)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The tool to compare the products is useful to make a choice") td:eq(3)',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (The checkout process is clear and secure)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The checkout process is clear and secure") td:eq(2)',
+    }, {
+        content: 'Answer What do your think about our new eCommerce (I have added products to my wishlist)',
+        trigger: 'div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("I have added products to my wishlist") td:last',
+    }, {
+        content: 'Answer Do you have any other comments, questions, or concerns',
+        trigger: 'div.js_question-wrapper:contains("Do you have any other comments, questions, or concerns") textarea',
+        run: 'text Is the prefill working?',
+    }, {
+        // Go back to previous page
+        content: 'Click on the previous page name in the breadcrumb',
+        trigger: 'ol.breadcrumb a:first',
+    }, {
+        trigger: 'div.js_question-wrapper:contains("How many times did you order products on our website ?") input',
+        run: function () {
+            var $inputQ3 = $('div.js_question-wrapper:contains("How many times did you order products on our website ?") input');
+            if ($inputQ3.val() === '42.0') {
+                $('.o_survey_title').addClass('prefilled');
+            }
+        }
+    }, {
+        trigger: '.o_survey_title.prefilled',
+        run: function () {
+            // check that all the answers are prefilled in Page 1
+            var $inputQ1 = $('div.js_question-wrapper:contains("Where do you live ?") input');
+            if ($inputQ1.val() !== 'Grand-Rosiere') {
+                return;
+            }
+
+            var $inputQ2 = $('div.js_question-wrapper:contains("When is your date of birth ?") input');
+            if ($inputQ2.val() !== '05/05/1980') {
+                return;
+            }
+
+            var $inputQ3 = $('div.js_question-wrapper:contains("How frequently do you buy products online ?") label:contains("Once a week") input');
+            if (!$inputQ3.is(':checked')) {
+                return;
+            }
+
+            var $inputQ4 = $('div.js_question-wrapper:contains("How many times did you order products on our website ?") input');
+            if ($inputQ4.val() !== '42.0') {
+                return;
+            }
+
+            $('.o_survey_title').addClass('tour_success');
+        }
+    }, {
+        trigger: '.o_survey_title.tour_success'
+    }, {
+        content: 'Click on Next Page',
+        trigger: 'button[value="next"]',
+    }, {
+        trigger: 'div.js_question-wrapper:contains("Do you have any other comments, questions, or concerns") textarea',
+        run: function () {
+            var $inputQ3 = $('div.js_question-wrapper:contains("Do you have any other comments, questions, or concerns") textarea');
+            if ($inputQ3.val() === "Is the prefill working?") {
+                $('.o_survey_title').addClass('prefilled2');
+            }
+        }
+    }, {
+        trigger: '.o_survey_title.prefilled2',
+        run: function () {
+            // check that all the answers are prefilled in Page 2
+            var $input1Q1 = $('div.js_question-wrapper:contains("Which of the following words would you use to describe our products") label:contains("High quality") input');
+            if (!$input1Q1.is(':checked')) {
+                return;
+            }
+
+            var $input2Q1 = $('div.js_question-wrapper:contains("Which of the following words would you use to describe our products") label:contains("Good value for money") input');
+            if (!$input2Q1.is(':checked')) {
+                return;
+            }
+
+            var $input1Q2 = $('div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The new layout and design is fresh and up-to-date") input:first');
+            if (!$input1Q2.is(':checked')) {
+                return;
+            }
+
+            var $input2Q2 = $('div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("It is easy to find the product that I want") input:eq(2)');
+            if (!$input2Q2.is(':checked')) {
+                return;
+            }
+
+            var $input3Q2 = $('div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The tool to compare the products is useful to make a choice") input:eq(3)');
+            if (!$input3Q2.is(':checked')) {
+                return;
+            }
+
+            var $input4Q2 = $('div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("The checkout process is clear and secure") input:eq(2)');
+            if (!$input4Q2.is(':checked')) {
+                return;
+            }
+
+            var $input5Q2 = $('div.js_question-wrapper:contains("What do your think about our new eCommerce") tr:contains("I have added products to my wishlist") input:last');
+            if (!$input5Q2.is(':checked')) {
+                return;
+            }
+
+            var $inputQ3 = $('div.js_question-wrapper:contains("Do you have any other comments, questions, or concerns") textarea');
+            if ($inputQ3.val() !== "Is the prefill working?") {
+                return;
+            }
+
+            $('.o_survey_title').addClass('tour_success_2');
+        }
+    }, {
+        trigger: '.o_survey_title.tour_success_2'
+    }
+]);
+
+});
+;
+
+/***********************************************************************
+*  Filepath: /survey/static/tests/tours/survey_session_manage_test.js  *
+*  Bundle: web.assets_tests                                            *
+*  Lines: 37                                                           *
+***********************************************************************/
+odoo.define('survey.session_manage_test', function (require) {
+"use strict";
+
+var SessionManager = require('survey.session_manage');
+/**
+ * Small override for test/tour purposes.
+ */
+SessionManager.include({
+    /**
+     * - Trigger the fetch of answer results immediately at the start.
+     * (Instead of wasting 2 seconds waiting after the start).
+     * - Set the fade in/out time to 1 ms to avoid unnecessary delays.
+     * - Avoid refreshing the results every 2 seconds
+     */
+    start: function () {
+        var self = this;
+        return this._super.apply(this, arguments)
+            .then(this._refreshResults.bind(this))
+            .then(function () {
+                self.fadeInOutTime = 1;
+                clearInterval(self.resultsRefreshInterval);
+            });
+    },
+
+    /**
+     * Force the timer to "now" to avoid introducing potential test breaking
+     * timely variables (rpc/small server delay/...) if the start_question_time flickers.
+     */
+    _startTimer: function () {
+        this.$el.data('timer', moment.utc());
+        return this._super.apply(this, arguments);
+    }
+});
+
+return SessionManager;
+
+});
+;
+
+/***********************************************************************
+*  Filepath: /survey/static/tests/tours/survey_tour_session_create.js  *
+*  Bundle: web.assets_tests                                            *
+*  Lines: 20                                                           *
+***********************************************************************/
+odoo.define('survey.test_survey_session_create_tour', function (require) {
+"use strict";
+
+var tour = require('web_tour.tour');
+var surveySessionTools = require('survey.session_tour_tools');
+
+/**
+ * Small tour that will simply start the session and wait for attendees.
+ */
+tour.register('test_survey_session_create_tour', {
+    url: "/web",
+    test: true,
+}, [].concat(surveySessionTools.accessSurveySteps, [{
+    trigger: 'button[name="action_start_session"]',
+}, {
+    trigger: '.o_survey_session_attendees_count:contains("0")',
+    run: function () {} // check session is correctly started
+}]));
+
+});
+;
+
+/***********************************************************************
+*  Filepath: /survey/static/tests/tours/survey_tour_session_manage.js  *
+*  Bundle: web.assets_tests                                            *
+*  Lines: 462                                                          *
+***********************************************************************/
+odoo.define('survey.test_survey_session_manage_tour', function (require) {
+"use strict";
+
+var tour = require('web_tour.tour');
+var surveySessionTools = require('survey.session_tour_tools');
+
+/**
+ * Since the chart is rendered using SVG, we can't use jQuery triggers to check if everything
+ * is correctly rendered.
+ * This helper method returns the chart data (Chartjs framework specific) in the following structure:
+ * [{ value, backgroundColor, labelColor }]
+ */
+var getChartData = function () {
+    var chartData = [];
+    var rootWidget = odoo.__DEBUG__.services['root.widget'];
+    var surveyManagePublicWidget = rootWidget.publicWidgets.find(function (widget) {
+        return widget.$el.hasClass('o_survey_session_manage');
+    });
+
+    if (!surveyManagePublicWidget) {
+        return chartData;
+    }
+
+    surveyManagePublicWidget.resultsChart.chart.data.datasets[0].data.forEach(function (value, index) {
+        chartData.push({
+            value: value,
+            backgroundColor: surveyManagePublicWidget.resultsChart._getBackgroundColor({dataIndex: index}),
+            labelColor: surveyManagePublicWidget.resultsChart._getLabelColor({dataIndex: index}),
+        });
+    });
+
+    return chartData;
+};
+
+var nextScreen = function () {
+    var e = $.Event('keydown');
+    e.keyCode = 39; // arrow-right
+    $(document).trigger(e);
+};
+
+var previousScreen = function () {
+    var e = $.Event('keydown');
+    e.keyCode = 37; // arrow-left
+    $(document).trigger(e);
+};
+
+var REGULAR_ANSWER_COLOR = '#212529';
+var CORRECT_ANSWER_COLOR = '#2CBB70';
+var WRONG_ANSWER_COLOR = '#D9534F';
+
+/**
+ * A 'regular' answer is an answer that is nor correct, nor incorrect.
+ * The check is based on the specific opacity (0.8) and color of those answers.
+ */
+var isRegularAnswer = function (answer) {
+    return answer.backgroundColor.includes('0.8') &&
+        answer.labelColor === REGULAR_ANSWER_COLOR;
+};
+
+/**
+ * The check is based on the specific opacity (0.8) and color of correct answers.
+ */
+var isCorrectAnswer = function (answer) {
+    return answer.backgroundColor.includes('0.8') &&
+        answer.labelColor === CORRECT_ANSWER_COLOR;
+};
+
+/**
+ * The check is based on the specific opacity (0.2) and color of incorrect answers.
+ */
+var isIncorrectAnswer = function (answer) {
+    return answer.backgroundColor.includes('0.2') &&
+        answer.labelColor === WRONG_ANSWER_COLOR;
+};
+
+/**
+ * Tour that will test the whole survey session from the host point of view.
+ *
+ * Break down of the main points:
+ * - Open the 'session manager' (the session was already created by a previous tour)
+ * - Display the nickname question, and move to the next one (as answers are not displayed)
+ * - Check answers are correctly displayed for the 3 'simple' question types (text, date, datetime)
+ * - Move to the choice question and check that answers are displayed
+ *   (The check is rather complex, see 'getChartData' for details)
+ * - If everything is correctly displayed, move to the next question
+ * - On the scored choice question, check that the screens are correctly chained:
+ *   no results displayed -> results displayed -> correct/incorrect answers -> leaderboard
+ * - On the scored + timed multiple choice question, check the same than previous question,
+ *   except that the results are supposed to be displayed automatically when the question timer runs out
+ * - Test the 'back' behavior and check that screens are reversed correctly
+ * - Check that our final leaderboard is correct based on attendees answers
+ * - Close the survey session
+ */
+tour.register('test_survey_session_manage_tour', {
+    url: "/web",
+    test: true,
+}, [].concat(surveySessionTools.accessSurveySteps, [{
+    trigger: 'button[name="action_open_session_manager"]',
+}, {
+    trigger: 'h1:contains("Nickname")',
+    run: function () {} // check nickname question is displayed
+}, {
+    trigger: 'h1',
+    run: nextScreen
+}, {
+    trigger: 'h1:contains("Text Question")',
+    run: function () {} // check text question is displayed
+}, {
+    trigger: '.o_survey_session_progress_small:contains("3 / 3")',
+    run: function () {} // check we have 3 answers
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("Attendee 1 is the best")',
+    run: function () {} // check attendee 1 answer is displayed
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("Attendee 2 rulez")',
+    run: function () {} // check attendee 2 answer is displayed
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("Attendee 3 will crush you")',
+    run: function () {} // check attendee 3 answer is displayed
+}, {
+    trigger: 'h1',
+    run: nextScreen
+}, {
+    trigger: '.o_survey_session_progress_small:contains("2 / 3")',
+    run: function () {} // check we have 2 answers
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("10/10/2010")',
+    run: function () {} // check attendee 1 answer is displayed
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("11/11/2011")',
+    run: function () {} // check attendee 2 answer is displayed
+}, {
+    trigger: 'h1',
+    run: previousScreen
+}, {
+    trigger: 'h1:contains("Text Question")',
+    run: function () {} // check text question is displayed
+}, {
+    trigger: '.o_survey_session_progress_small:contains("3 / 3")',
+    run: function () {} // check we have 3 answers
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("Attendee 1 is the best")',
+    run: function () {} // check attendee 1 answer is displayed
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("Attendee 2 rulez")',
+    run: function () {} // check attendee 2 answer is displayed
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("Attendee 3 will crush you")',
+    run: function () {} // check attendee 3 answer is displayed
+}, {
+    trigger: 'h1',
+    run: nextScreen
+}, {
+    trigger: '.o_survey_session_progress_small:contains("2 / 3")',
+    run: function () {} // check we have 2 answers
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("10/10/2010")',
+    run: function () {} // check attendee 1 answer is displayed
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("11/11/2011")',
+    run: function () {} // check attendee 2 answer is displayed
+}, {
+    trigger: 'h1',
+    run: nextScreen
+}, {
+    trigger: '.o_survey_session_progress_small:contains("2 / 3")',
+    run: function () {} // check we have 2 answers
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("10/10/2010 10:00:00")',
+    run: function () {} // check attendee 2 answer is displayed
+}, {
+    trigger: '.o_survey_session_text_answer_container:contains("11/11/2011 15:55:55")',
+    run: function () {} // check attendee 3 answer is displayed
+}, {
+    trigger: 'h1',
+    run: nextScreen
+}, {
+    trigger: 'h1:contains("Regular Simple Choice")',
+    run: function () {
+        var chartData = getChartData();
+        if (chartData.length !== 3) {
+            console.error('Chart data should contain 3 records!');
+            return;
+        }
+
+        var firstAnswerData = chartData[0];
+        if (firstAnswerData.value !== 2 || !isRegularAnswer(firstAnswerData)) {
+            console.error('First answer should be picked by 2 users!');
+            return;
+        }
+
+        var secondAnswerData = chartData[1];
+        if (secondAnswerData.value !== 1 || !isRegularAnswer(secondAnswerData)) {
+            console.error('Second answer should be picked by 1 user!');
+            return;
+        }
+
+        var thirdAnswerData = chartData[2];
+        if (thirdAnswerData.value !== 0 || !isRegularAnswer(thirdAnswerData)) {
+            console.error('Third answer should be picked by no users!');
+            return;
+        }
+
+        nextScreen();
+    }
+}, {
+    trigger: 'h1:contains("Scored Simple Choice")',
+    run: function () {
+        var chartData = getChartData();
+        if (chartData.length !== 4) {
+            console.error('Chart data should contain 4 records!');
+            return;
+        }
+
+        for (var i = 0; i < chartData.length; i++) {
+            if (chartData[i].value !== 0) {
+                console.error(
+                    'Chart data should all be 0 because "next screen" that shows ' +
+                    'answers values is not triggered yet!');
+                return;
+            }
+        }
+
+        nextScreen();
+        chartData = getChartData();
+
+        var firstAnswerData = chartData[0];
+        if (firstAnswerData.value !== 1 || !isRegularAnswer(firstAnswerData)) {
+            console.error(
+                'First answer should be picked by 1 user and its correctness should not be shown yet!'
+            );
+            return;
+        }
+
+        var secondAnswerData = chartData[1];
+        if (secondAnswerData.value !== 1 || !isRegularAnswer(secondAnswerData)) {
+            console.error(
+                'Second answer should be picked by 1 user and its correctness should not be shown yet!'
+            );
+            return;
+        }
+
+        var thirdAnswerData = chartData[2];
+        if (thirdAnswerData.value !== 1 || !isRegularAnswer(thirdAnswerData)) {
+            console.error(
+                'Third answer should be picked by 1 user and its correctness should not be shown yet!'
+            );
+            return;
+        }
+
+        var fourthAnswerData = chartData[3];
+        if (fourthAnswerData.value !== 0 || !isRegularAnswer(fourthAnswerData)) {
+            console.error(
+                'Fourth answer should be picked by no users and its correctness should not be shown yet!'
+            );
+            return;
+        }
+
+        nextScreen();
+        chartData = getChartData();
+
+        firstAnswerData = chartData[0];
+        if (firstAnswerData.value !== 1 || !isCorrectAnswer(firstAnswerData)) {
+            console.error(
+                'First answer should be picked by 1 user and it should be correct!'
+            );
+            return;
+        }
+
+        secondAnswerData = chartData[1];
+        if (secondAnswerData.value !== 1 || !isIncorrectAnswer(secondAnswerData)) {
+            console.error(
+                'Second answer should be picked by 1 user and it should be incorrect!'
+            );
+            return;
+        }
+
+        thirdAnswerData = chartData[2];
+        if (thirdAnswerData.value !== 1 || !isIncorrectAnswer(thirdAnswerData)) {
+            console.error(
+                'Third answer should be picked by 1 user and it should be incorrect!'
+            );
+            return;
+        }
+
+        fourthAnswerData = chartData[3];
+        if (fourthAnswerData.value !== 0 || !isIncorrectAnswer(fourthAnswerData)) {
+            console.error(
+                'Fourth answer should be picked by no users and it should be incorrect!'
+            );
+            return;
+        }
+
+        nextScreen();
+        nextScreen();
+    }
+}, {
+    trigger: 'h1:contains("Timed Scored Multiple Choice")',
+    run: function () {
+        var chartData = getChartData();
+        if (chartData.length !== 3) {
+            console.error('Chart data should contain 4 records!');
+            return;
+        }
+
+        for (var i = 0; i < chartData.length; i++) {
+            if (chartData[i].value !== 0) {
+                console.error(
+                    'Chart data should all be 0 because "next screen" that shows ' +
+                    'answers values is not triggered yet!');
+                return;
+            }
+        }
+
+        // after 1 second, results are displayed automatically because question timer runs out
+        // we add 1 extra second because of the way the timer works:
+        // it only triggers the time_up event 1 second AFTER the delay is passed
+        setTimeout(function () {
+            chartData = getChartData();
+            var firstAnswerData = chartData[0];
+            if (firstAnswerData.value !== 2 || !isRegularAnswer(firstAnswerData)) {
+                console.error(
+                    'First answer should be picked by 2 users and its correctness should not be shown yet!'
+                );
+                return;
+            }
+
+            var secondAnswerData = chartData[1];
+            if (secondAnswerData.value !== 2 || !isRegularAnswer(secondAnswerData)) {
+                console.error(
+                    'Second answer should be picked by 2 users and its correctness should not be shown yet!'
+                );
+                return;
+            }
+
+            var thirdAnswerData = chartData[2];
+            if (thirdAnswerData.value !== 1 || !isRegularAnswer(thirdAnswerData)) {
+                console.error(
+                    'Third answer should be picked by 1 user and its correctness should not be shown yet!'
+                );
+                return;
+            }
+
+            nextScreen();
+            chartData = getChartData();
+
+            firstAnswerData = chartData[0];
+            if (firstAnswerData.value !== 2 || !isCorrectAnswer(firstAnswerData)) {
+                console.error(
+                    'First answer should be picked by 2 users and it should be correct!'
+                );
+                return;
+            }
+
+            secondAnswerData = chartData[1];
+            if (secondAnswerData.value !== 2 || !isCorrectAnswer(secondAnswerData)) {
+                console.error(
+                    'Second answer should be picked by 2 users and it should be correct!'
+                );
+                return;
+            }
+
+            thirdAnswerData = chartData[2];
+            if (thirdAnswerData.value !== 1 || !isIncorrectAnswer(thirdAnswerData)) {
+                console.error(
+                    'Third answer should be picked by 1 user and it should be incorrect!'
+                );
+                return;
+            }
+
+            nextScreen();
+        }, 2100);
+    }
+}, {
+    trigger: 'h1:contains("Final Leaderboard")',
+    run: function () {} // Final Leaderboard is displayed
+}, {
+    trigger: 'h1',
+    run: function () {
+        // previous screen testing
+        previousScreen();
+        var chartData = getChartData();
+
+        var firstAnswerData = chartData[0];
+        if (firstAnswerData.value !== 2 || !isCorrectAnswer(firstAnswerData)) {
+            console.error(
+                'First answer should be picked by 2 users and it should be correct!'
+            );
+            return;
+        }
+
+        var secondAnswerData = chartData[1];
+        if (secondAnswerData.value !== 2 || !isCorrectAnswer(secondAnswerData)) {
+            console.error(
+                'Second answer should be picked by 2 users and it should be correct!'
+            );
+            return;
+        }
+
+        var thirdAnswerData = chartData[2];
+        if (thirdAnswerData.value !== 1 || !isIncorrectAnswer(thirdAnswerData)) {
+            console.error(
+                'Third answer should be picked by 1 user and it should be incorrect!'
+            );
+            return;
+        }
+
+        previousScreen();
+        chartData = getChartData();
+
+        firstAnswerData = chartData[0];
+        if (firstAnswerData.value !== 2 || !isRegularAnswer(firstAnswerData)) {
+            console.error(
+                'First answer should be picked by 2 users and its correctness should not be shown!'
+            );
+            return;
+        }
+
+        secondAnswerData = chartData[1];
+        if (secondAnswerData.value !== 2 || !isRegularAnswer(secondAnswerData)) {
+            console.error(
+                'Second answer should be picked by 2 users and its correctness should not be shown!'
+            );
+            return;
+        }
+
+        thirdAnswerData = chartData[2];
+        if (thirdAnswerData.value !== 1 || !isRegularAnswer(thirdAnswerData)) {
+            console.error(
+                'Third answer should be picked by 1 user and its correctness should not be shown!'
+            );
+            return;
+        }
+
+        previousScreen();
+        chartData = getChartData();
+
+        for (var i = 0; i < chartData.length; i++) {
+            if (chartData[i].value !== 0) {
+                console.error(
+                    'Chart data should all be 0 because "next screen" that shows ' +
+                    'answers values is not triggered yet!');
+                return;
+            }
+        }
+
+        // Now we go forward to the "Final Leaderboard" again (3 times)
+        for (i = 0; i < 3; i++) {
+            nextScreen();
+        }
+    }
+}, {
+    trigger: 'h1:contains("Final Leaderboard")',
+    run: function () {} // Final Leaderboard is displayed
+}, {
+    trigger: '.o_survey_session_close:has("i.fa-close")'
+}, {
+    trigger: 'button[name="action_start_session"]',
+    run: function () {} // check that we can start another session
+}]));
+
+});
+;
+
+/**********************************************************************
+*  Filepath: /survey/static/tests/tours/survey_tour_session_start.js  *
+*  Bundle: web.assets_tests                                           *
+*  Lines: 32                                                          *
+**********************************************************************/
+odoo.define('survey.test_survey_session_start_tour', function (require) {
+"use strict";
+
+var tour = require('web_tour.tour');
+var surveySessionTools = require('survey.session_tour_tools');
+
+/**
+ * Small tour that will open the session manager and check
+ * that the attendees are accounted for, then start the session
+ * by going to the first question.
+ */
+tour.register('test_survey_session_start_tour', {
+    url: "/web",
+    test: true,
+}, [].concat(surveySessionTools.accessSurveySteps, [{
+    trigger: 'button[name="action_open_session_manager"]',
+}, {
+    trigger: '.o_survey_session_attendees_count:contains("3")',
+    run: function () {} // check attendees count
+}, {
+    trigger: 'h1',
+    run: function () {
+        var e = $.Event('keydown');
+        e.keyCode = 39; // arrow-right
+        $(document).trigger(e); // start session
+    }
+}, {
+    trigger: 'h1:contains("Nickname")',
+    run: function () {} // check first question is displayed
+}]));
+
+});
+;
+
+/**********************************************************************
+*  Filepath: /survey/static/tests/tours/survey_tour_session_tools.js  *
+*  Bundle: web.assets_tests                                           *
+*  Lines: 21                                                          *
+**********************************************************************/
+odoo.define('survey.session_tour_tools', function (require) {
+'use strict';
+
+var tour = require('web_tour.tour');
+
+/**
+ * Tool that gathers common steps to every 'survey session' tours.
+ */
+return {
+    accessSurveySteps: [tour.stepUtils.showAppsMenuItem(), {
+        trigger: '.o_app[data-menu-xmlid="survey.menu_surveys"]',
+        edition: 'community'
+    }, {
+        trigger: '.o_app[data-menu-xmlid="survey.menu_surveys"]',
+        edition: 'enterprise'
+    }, {
+        trigger: '.oe_kanban_card:contains("User Session Survey")',
+    }]
+};
+
+});
+;
+
+/*********************************************************
+*  Filepath: /web_responsive/static/tests/test_patch.js  *
+*  Bundle: web.assets_tests                              *
+*  Lines: 19                                             *
+*********************************************************/
+/* Copyright 2021 ITerra - Sergey Shebanin
+ * License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl). */
+odoo.define("web_responsive.test_patch", function (require) {
+    "use strict";
+
+    const utils = require("web_tour.TourStepUtils");
+
+    /* Make base odoo JS tests working */
+    utils.include({
+        showAppsMenuItem() {
+            return {
+                edition: "community",
+                trigger: ".o_navbar_apps_menu",
+                auto: true,
+                position: "bottom",
+            };
+        },
+    });
+});
+;
+
+/***************************************************
+*  Filepath: /auth_totp/static/tests/totp_flow.js  *
+*  Bundle: web.assets_tests                        *
+*  Lines: 308                                      *
+***************************************************/
+odoo.define('auth_totp.tours', function(require) {
+"use strict";
+
+const tour = require('web_tour.tour');
+const ajax = require('web.ajax');
+
+function openRoot() {
+    return [{
+        content: "return to client root to avoid race condition",
+        trigger: 'body',
+        run() {
+            $('body').addClass('wait');
+            window.location = '/web';
+        }
+    }, {
+        content: "wait for client reload",
+        trigger: 'body:not(.wait)',
+        run() {}
+    }];
+}
+function openUserProfileAtSecurityTab() {
+    return [{
+        content: 'Open user account menu',
+        trigger: '.o_user_menu .oe_topbar_name',
+        run: 'click',
+    }, {
+        content: "Open preferences / profile screen",
+        trigger: '[data-menu=settings]',
+        run: 'click',
+    }, {
+        content: "Switch to security tab",
+        trigger: 'a[role=tab]:contains("Account Security")',
+        run: 'click',
+    }];
+}
+
+tour.register('totp_tour_setup', {
+    test: true,
+    url: '/web'
+}, [...openUserProfileAtSecurityTab(), {
+    content: "Open totp wizard",
+    trigger: 'button[name=action_totp_enable_wizard]',
+}, {
+    content: "Check that we have to enter enhanced security mode",
+    trigger: 'div:contains("enter your password")',
+    run: () => {},
+}, {
+    content: "Input password",
+    trigger: '[name=password]',
+    run: 'text demo', // FIXME: better way to do this?
+}, {
+    content: "Confirm",
+    trigger: "button:contains(Confirm Password)",
+}, {
+    content: "Check the wizard has opened",
+    trigger: 'li:contains("When requested to do so")',
+    run: () => {}
+}, {
+    content: "Get secret from collapsed div",
+    trigger: 'a:contains("Cannot scan it?")',
+    run(helpers) {
+        const $secret = this.$anchor.closest('div').find('span[name=secret]');
+        const $copyBtn = $secret.find('button');
+        $copyBtn.remove();
+        const secret = $secret.text();
+        ajax.jsonRpc('/totphook', 'call', {
+            secret
+        }).then((token) => {
+            helpers._text(helpers._get_action_values('input[name=code]'), token);
+            helpers._click(helpers._get_action_values('button.btn-primary:contains(Activate)'));
+            $('body').addClass('got-token')
+        });
+    }
+}, {
+    content: 'wait for rpc',
+    trigger: 'body.got-token',
+    run() {}
+},
+...openRoot(),
+...openUserProfileAtSecurityTab(),
+{
+    content: "Check that the button has changed",
+    trigger: 'button[name=action_totp_disable]',
+    run: () => {}
+}]);
+
+tour.register('totp_login_enabled', {
+    test: true,
+    url: '/'
+}, [{
+    content: "check that we're on the login page or go to it",
+    trigger: 'input#login, a:contains(Sign in)'
+}, {
+    content: "input login",
+    trigger: 'input#login',
+    run: 'text demo',
+}, {
+    content: 'input password',
+    trigger: 'input#password',
+    run: 'text demo',
+}, {
+    content: "click da button",
+    trigger: 'button:contains("Log in")',
+}, {
+    content: "expect totp screen",
+    trigger: 'label:contains(Authentication Code)',
+}, {
+    content: "input code",
+    trigger: 'input[name=totp_token]',
+    run(helpers) {
+        ajax.jsonRpc('/totphook', 'call', {}).then((token) => {
+            helpers._text(helpers._get_action_values(), token);
+            // FIXME: is there a way to put the button as its own step trigger without
+            //        the tour straight blowing through and not waiting for this?
+            helpers._click(helpers._get_action_values('button:contains("Login")'));
+        });
+    }
+}, {
+    content: "check we're logged in",
+    trigger: ".o_user_menu .oe_topbar_name",
+    run: () => {}
+}]);
+
+tour.register('totp_login_device', {
+    test: true,
+    url: '/'
+}, [{
+    content: "check that we're on the login page or go to it",
+    trigger: 'input#login, a:contains(Sign in)'
+}, {
+    content: "input login",
+    trigger: 'input#login',
+    run: 'text demo',
+}, {
+    content: 'input password',
+    trigger: 'input#password',
+    run: 'text demo',
+}, {
+    content: "click da button",
+    trigger: 'button:contains("Log in")',
+}, {
+    content: "expect totp screen",
+    trigger: 'label:contains(Authentication Code)',
+}, {
+    content: "check remember device box",
+    trigger: 'label[for=switch-remember]',
+}, {
+    content: "input code",
+    trigger: 'input[name=totp_token]',
+    run(helpers) {
+        ajax.jsonRpc('/totphook', 'call', {}).then((token) => {
+            helpers._text(helpers._get_action_values(), token);
+            // FIXME: is there a way to put the button as its own step trigger without
+            //        the tour straight blowing through and not waiting for this?
+            helpers._click(helpers._get_action_values('button:contains("Login")'));
+        });
+    }
+}, {
+    content: "check we're logged in",
+    trigger: ".o_user_menu .oe_topbar_name",
+    run: 'click',
+}, {
+    content: "click the Log out button",
+    trigger: '.dropdown-item[data-menu=logout]',
+}, {
+    content: "check that we're back on the login page or go to it",
+    trigger: 'input#login, a:contains(Log in)'
+}, {
+    content: "input login again",
+    trigger: 'input#login',
+    run: 'text demo',
+}, {
+    content: 'input password again',
+    trigger: 'input#password',
+    run: 'text demo',
+}, {
+    content: "click da button again",
+    trigger: 'button:contains("Log in")',
+},  {
+    content: "check we're logged in without 2FA",
+    trigger: ".o_user_menu .oe_topbar_name",
+    run: () => {}
+},
+// now go and disable two-factor authentication would be annoying to do in a separate tour
+// because we'd need to login & totp again as HttpCase.authenticate can't
+// succeed w/ totp enabled
+...openUserProfileAtSecurityTab(),
+{
+    content: "Open totp wizard",
+    trigger: 'button[name=action_totp_disable]',
+}, {
+    content: "Check that we have to enter enhanced security mode",
+    trigger: 'div:contains("enter your password")',
+    run: () => {},
+}, {
+    content: "Input password",
+    trigger: '[name=password]',
+    run: 'text demo', // FIXME: better way to do this?
+}, {
+    content: "Confirm",
+    trigger: "button:contains(Confirm Password)",
+},
+...openRoot(),
+...openUserProfileAtSecurityTab(),
+{
+    content: "Check that the button has changed",
+    trigger: 'button[name=action_totp_enable_wizard]',
+    run: () => {}
+}]);
+
+tour.register('totp_login_disabled', {
+    test: true,
+    url: '/'
+}, [{
+    content: "check that we're on the login page or go to it",
+    trigger: 'input#login, a:contains(Sign in)'
+}, {
+    content: "input login",
+    trigger: 'input#login',
+    run: 'text demo',
+}, {
+    content: 'input password',
+    trigger: 'input#password',
+    run: 'text demo',
+}, {
+    content: "click da button",
+    trigger: 'button:contains("Log in")',
+},
+// normally we'd end the tour here as it's all we care about but there are a
+// bunch of ongoing queries from the loading of the web client which cause
+// issues, so go and open the preferences / profile screen to make sure
+// everything settles down
+...openUserProfileAtSecurityTab(),
+]);
+
+const columns = {};
+tour.register('totp_admin_disables', {
+    test: true,
+    url: '/web'
+}, [tour.stepUtils.showAppsMenuItem(), {
+    content: 'Go to settings',
+    trigger: '[data-menu-xmlid="base.menu_administration"]'
+}, {
+    content: 'Wait for page',
+    trigger: '.o_menu_brand:contains("Settings")',
+    run: () => {}
+}, {
+    content: "Open Users menu",
+    trigger: '[data-menu-xmlid="base.menu_users"]'
+}, {
+    content: "Open Users view",
+    trigger: '[data-menu-xmlid="base.menu_action_res_users"]',
+    run: function (helpers) {
+        // funny story: the users view we're trying to reach, sometimes we're
+        // already there, but if we re-click the next step executes before the
+        // action has the time to re-load, the one after that doesn't, and our
+        // selection get discarded by the action reloading, so here try to
+        // see if we're already on the users action through the breadcrumb and
+        // just close the menu if so
+        const $crumb = $('.breadcrumb');
+        if ($crumb.text().indexOf('Users') === -1) {
+            // on general settings page, click menu
+            helpers.click();
+        } else {
+            // else close menu
+            helpers.click($('[data-menu-xmlid="base.menu_users"]'));
+        }
+    }
+}, {
+    content: "Find Demo User",
+    trigger: 'td.o_data_cell:contains("demo")',
+    run: function (helpers) {
+        const $titles = this.$anchor.closest('table').find('tr:first th');
+        for (let i=0; i<$titles.length; ++i) {
+            columns[$titles[i].getAttribute('data-name')] = i;
+        }
+        const $row = this.$anchor.closest('tr');
+        const sel = $row.find('.o_list_record_selector input[type=checkbox]');
+        helpers.click(sel);
+    }
+}, {
+    content: "Open Actions menu",
+    trigger: 'button.dropdown-toggle:contains("Action")'
+}, {
+    content: "Select totp remover",
+    trigger: 'a.dropdown-item:contains(Disable two-factor authentication)'
+}, { // enhanced security yo
+    content: "Check that we have to enter enhanced security mode",
+trigger: 'div:contains("enter your password")',
+    run: () => {},
+}, {
+    content: "Input password",
+    trigger: '[name=password]',
+    run: 'text admin', // FIXME: better way to do this?
+}, {
+    content: "Confirm",
+    trigger: "button:contains(Confirm Password)",
+}, {
+    content: "open the user's form",
+    trigger: "td.o_data_cell:contains(demo)",
+}, {
+    content: "go to Account security Tab",
+    trigger: "a.nav-link:contains(Account Security)",
+}, {
+    content: "check that demo user has been de-totp'd",
+    trigger: "button[name=action_totp_enable_wizard]",
+}])
+});
+;
+
+/********************************************************
+*  Filepath: /auth_totp_mail/static/tests/totp_flow.js  *
+*  Bundle: web.assets_tests                             *
+*  Lines: 92                                            *
+********************************************************/
+odoo.define('auth_totp_mail.tours', function(require) {
+"use strict";
+
+const tour = require('web_tour.tour');
+
+function openUserProfileAtSecurityTab() {
+    return [{
+        content: 'Open user account menu',
+        trigger: '.o_user_menu .oe_topbar_name',
+        run: 'click',
+    }, {
+        content: "Open preferences / profile screen",
+        trigger: '[data-menu=settings]',
+        run: 'click',
+    }, {
+        content: "Switch to security tab",
+        trigger: 'a[role=tab]:contains("Account Security")',
+        run: 'click',
+    }];
+}
+
+function openAccountSettingsTab() {
+    return [{
+        content: 'Go to settings',
+        trigger: '[data-menu-xmlid="base.menu_administration"]'
+    }, {
+        content: 'Wait for page',
+        trigger: '.o_menu_brand:contains("Settings")',
+        run: () => {}
+    }, {
+        content: "Open Users menu",
+        trigger: '[data-menu-xmlid="base.menu_users"]'
+    }, {
+        content: "Open Users view",
+        trigger: '[data-menu-xmlid="base.menu_action_res_users"]',
+        run: function (helpers) {
+            // funny story: the users view we're trying to reach, sometimes we're
+            // already there, but if we re-click the next step executes before the
+            // action has the time to re-load, the one after that doesn't, and our
+            // selection get discarded by the action reloading, so here try to
+            // see if we're already on the users action through the breadcrumb and
+            // just close the menu if so
+            const $crumb = $('.breadcrumb');
+            if ($crumb.text().indexOf('Users') === -1) {
+                // on general settings page, click menu
+                helpers.click();
+            } else {
+                // else close menu
+                helpers.click($('[data-menu-xmlid="base.menu_users"]'));
+            }
+        }
+    }];
+}
+
+tour.register('totp_admin_self_invite', {
+    test: true,
+    url: '/web'
+}, [tour.stepUtils.showAppsMenuItem(), ...openAccountSettingsTab(), {
+    content: "open the user's form",
+    trigger: "td.o_data_cell:contains(admin)",
+}, {
+    content: "go to Account security Tab",
+    trigger: "a.nav-link:contains(Account Security)",
+}, {
+    content: "check that user cannot invite himself to use 2FA.",
+    trigger: "body",
+    run: function () {
+        var $inviteBtn = $('button:contains(Invite to use 2FA)');
+        if ($inviteBtn.hasClass('o_invisible_modifier')) {
+            $('body').addClass('CannotInviteYourself');
+        }
+    }
+}, {
+    content: "check that user cannot invite themself.",
+    trigger: "body.CannotInviteYourself"
+}]);
+
+tour.register('totp_admin_invite', {
+    test: true,
+    url: '/web'
+}, [tour.stepUtils.showAppsMenuItem(), ...openAccountSettingsTab(), {
+    content: "open the user's form",
+    trigger: "td.o_data_cell:contains(demo)",
+}, {
+    content: "go to Account security Tab",
+    trigger: "a.nav-link:contains(Account Security)",
+}, {
+    content: "check that demo user can be invited to use 2FA.",
+    trigger: "button:contains(Invite to use 2FA)",
+}]);
+
+});;
+
+/************************************************************
+*  Filepath: /auth_totp_portal/static/tests/totp_portal.js  *
+*  Bundle: web.assets_tests                                 *
+*  Lines: 124                                               *
+************************************************************/
+odoo.define('auth_totp_portal.tours', function(require) {
+"use strict";
+
+const tour = require('web_tour.tour');
+const ajax = require('web.ajax');
+
+tour.register('totportal_tour_setup', {
+    test: true,
+    url: '/my/security'
+}, [{
+    content: "Open totp wizard",
+    trigger: 'button#auth_totp_portal_enable',
+}, {
+    content: "Check that we have to enter enhanced security mode",
+    trigger: 'div:contains("enter your password")',
+    run: () => {},
+}, {
+    content: "Input password",
+    trigger: '[name=password]',
+    run: 'text portal', // FIXME: better way to do this?
+}, {
+    content: "Confirm",
+    trigger: "button:contains(Confirm Password)",
+}, {
+    content: "Check the wizard has opened",
+    trigger: 'li:contains("scan the barcode below")',
+    run: () => {}
+}, {
+    content: "Get secret from collapsed div",
+    trigger: 'a:contains("Cannot scan it?")',
+    run: async function(helpers) {
+        const secret = this.$anchor.closest('div').find('span[name="secret"]').text();
+        const token = await ajax.jsonRpc('/totphook', 'call', {
+            secret
+        });
+        helpers._text(helpers._get_action_values('input[name=code]'), token);
+        helpers._click(helpers._get_action_values('button.btn-primary:contains(Activate)'));
+    }
+}, {
+    content: "Check that the button has changed",
+    trigger: 'button:contains(Disable two-factor authentication)',
+    run: () => {}
+}]);
+
+tour.register('totportal_login_enabled', {
+    test: true,
+    url: '/'
+}, [{
+    content: "check that we're on the login page or go to it",
+    trigger: 'input#login, a:contains(Sign in)'
+}, {
+    content: "input login",
+    trigger: 'input#login',
+    run: 'text portal',
+}, {
+    content: 'input password',
+    trigger: 'input#password',
+    run: 'text portal',
+}, {
+    content: "click da button",
+    trigger: 'button:contains("Log in")',
+}, {
+    content: "expect totp screen",
+    trigger: 'label:contains(Authentication Code)',
+}, {
+    content: "input code",
+    trigger: 'input[name=totp_token]',
+    run: async function (helpers) {
+        const token = await ajax.jsonRpc('/totphook', 'call', {});
+        helpers._text(helpers._get_action_values(), token);
+        // FIXME: is there a way to put the button as its own step trigger without
+        //        the tour straight blowing through and not waiting for this?
+        helpers._click(helpers._get_action_values('button:contains("Login")'));
+    }
+}, {
+    content: "check we're logged in",
+    trigger: "h3:contains(Documents)",
+    run: () => {}
+}, {
+    content: "go back to security",
+    trigger: "a:contains(Security)",
+},{
+    content: "Open totp wizard",
+    trigger: 'button#auth_totp_portal_disable',
+}, {
+    content: "Check that we have to enter enhanced security mode",
+    trigger: 'div:contains("enter your password")',
+    run: () => {},
+}, {
+    content: "Input password",
+    trigger: '[name=password]',
+    run: 'text portal', // FIXME: better way to do this?
+}, {
+    content: "Confirm",
+    trigger: "button:contains(Confirm Password)",
+}, {
+    content: "Check that the button has changed",
+    trigger: 'button:contains(Enable two-factor authentication)',
+    run: () => {}
+}]);
+
+tour.register('totportal_login_disabled', {
+    test: true,
+    url: '/'
+}, [{
+    content: "check that we're on the login page or go to it",
+    trigger: 'input#login, a:contains(Sign in)'
+}, {
+    content: "input login",
+    trigger: 'input#login',
+    run: 'text portal',
+}, {
+    content: 'input password',
+    trigger: 'input#password',
+    run: 'text portal',
+}, {
+    content: "click da button",
+    trigger: 'button:contains("Log in")',
+}, {
+    content: "check we're logged in",
+    trigger: "h3:contains(Documents)",
+    run: () => {}
+}]);
+});
+
+//# sourceMappingURL=/web/assets/1901-2a908d6/web.assets_tests.js.map

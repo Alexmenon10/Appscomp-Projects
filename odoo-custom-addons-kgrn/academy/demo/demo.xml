@@ -1,0 +1,38 @@
+<odoo>
+    <data>
+          <record id="test_menu" model="website.menu">
+            <field name="name">About Us</field>
+            <field name="url">/about_us</field>
+            <field name="parent_id" ref="website.main_menu"/>
+            <field name="sequence" type="int">100</field>
+          </record>
+
+        <record id="menu_contactus" model="website.menu">
+            <field name="name">Sale Order</field>
+            <field name="url">/sale_order</field>
+            <field name="page_id" ref="website.contactus_page"/>
+            <field name="parent_id" ref="website.main_menu"/>
+            <field name="sequence" type="int">60</field>
+        </record>
+
+<!--          <record id="object1" model="academy.academy">-->
+<!--            <field name="name">Object 1</field>-->
+<!--            <field name="value">10</field>-->
+<!--          </record>-->
+
+<!--          <record id="object2" model="academy.academy">-->
+<!--            <field name="name">Object 2</field>-->
+<!--            <field name="value">20</field>-->
+<!--          </record>-->
+
+<!--          <record id="object3" model="academy.academy">-->
+<!--            <field name="name">Object 3</field>-->
+<!--            <field name="value">30</field>-->
+<!--          </record>-->
+
+<!--          <record id="object4" model="academy.academy">-->
+<!--            <field name="name">Object 4</field>-->
+<!--            <field name="value">40</field>-->
+<!--          </record>-->
+    </data>
+</odoo>

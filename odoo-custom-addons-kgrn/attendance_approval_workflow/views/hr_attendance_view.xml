@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<odoo>
+
+    <record model="ir.ui.view" id="view_hr_attendance_inherit_custom_probc">
+        <field name="name">hr.attendance.inherit.form.custom</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_draft" type="object" string="Set to Draft"
+                            attrs="{'invisible': [('custom_state', 'not in', ['approve','reject'])]}"
+                            groups="hr_attendance.group_hr_attendance_manager"/>
+                    <button name="action_approve" string="Approve" class="btn-primary" type="object"
+                            attrs="{'invisible': [('custom_state', 'not in', ['draft'])]}"
+                            groups="hr_attendance.group_hr_attendance_manager"/>
+                    <button
+                            string="Reject"
+                            name="%(action_hr_attendance_refuse_wizard)d"
+                            type="action"
+                            class="oe_highlight"
+                            groups="hr_attendance.group_hr_attendance_manager"
+                            attrs="{'invisible': [('custom_state', 'not in', ['draft'])]}"/>
+                    />
+                    <field name="custom_state" widget="statusbar" statusbar_visible="draft,approve,reject"/>
+                </header>
+            </xpath>
+            <xpath expr="//form/sheet" position="inside">
+                <notebook>
+                    <page string="Approval Details" name="approval_details">
+                        <group>
+                            <group>
+                                <field name="custom_approver_id"/>
+                                <field name="custom_reject_id"/>
+                                <field name="custom_reason_refuse"/>
+                            </group>
+                        </group>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="view_hr_attendance_tree_inherit_custom_probc">
+        <field name="name">hr.attendance.inherit.tree.custom</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <button name="action_draft" type="object"
+                        attrs="{'invisible': [('custom_state', 'not in', ['approve','reject'])]}" class="fa fa-envelope"
+                        groups="hr_attendance.group_hr_attendance_manager"/>
+                <!-- <button name="action_draft" type="object" attrs="{'invisible': [('custom_state', 'not in', ['approve','reject'])]}">
+                    <img src="/attendance_approval_workflow/static/description/icon.png"/>
+                </button> -->
+                <button name="action_approve" icon="fa-check" type="object"
+                        attrs="{'invisible': [('custom_state', 'not in', ['draft'])]}"
+                        groups="hr_attendance.group_hr_attendance_manager"/>
+                <button name="action_reject" icon="fa-remove" type="object"
+                        attrs="{'invisible': [('custom_state', 'not in', ['draft'])]}"
+                        groups="hr_attendance.group_hr_attendance_manager"/>
+                <field name="custom_state"/>
+            </xpath>
+            <xpath expr="//field[@name='employee_id']" position="replace">
+                <field name="employee_id"/>
+            </xpath>
+            <xpath expr="//field[@name='employee_id']" position="before">
+                <field name="emp_code"/>
+                <field name="bulk_attendance_employee"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

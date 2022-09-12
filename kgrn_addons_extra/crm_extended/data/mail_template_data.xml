@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--Mail Template for Service Engagement Confirm-->
+        <record id="service_engagemnet_confirmation_maiiii" model="mail.template">
+            <field name="name">Service Engagement - Send by Email</field>
+            <field name="model_id" ref="crm_extended.model_sale_order"/>
+            <field name="subject">Service Engagement</field>
+            <field name="report_template" ref="sale.action_report_saleorder"/>
+            <field name="email_from">${object.user_id.email}</field>
+            <field name="email_to">${object.partner_id.email}</field>
+            <field name="email_cc">${object.team_members_mail}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html"><![CDATA[
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+                <tr><td valign="middle">
+                    <span style="font-size: 10px;">Your Service Engagement</span><br/>
+                    <span style="font-size: 20px; font-weight: bold;">
+                       ${object.name}
+                    </span>
+                </td><td valign="middle" align="right">
+                   <div style="width: 45%;float: top;">
+                        <img src='/web/binary/company_logo' style="width:30%"/>
+                    </div>
+                </td></tr>
+                <tr><td colspan="2" style="text-align:center;">
+                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+                </td></tr>
+            </table>
+                <p> Dear ${object.team_id.name} Team,
+            <br/>
+            <br/>
+            Service Engagement of ${object.name} amounting in ${object.amount_total} has confirmed, Thank you for your trust!.
+                <br/>
+                Do not hesitate to contact us if you have any questions.
+                <br/>
+                <br/>
+                <br/>
+            Regards,<br/>
+            ${object.user_id.name}
+            <br>
+            <br/>
+            <br/>
+            <p align="center">
+                <a target="_blank" href="${ctx.get('url')}" style="border-radius: 25px;padding:10px;color: #fefefe;background-color: #ea714b;border-style: solid;" class='oe_highlight'">
+                    <b>View Service Engagement</b>
+                </a>
+            </p>
+
+            <br/>
+            <br/>
+
+            <p align="center">----------------------------------This is a system generated email----------------------------------------------</p></p>
+]]>
+            </field>
+        </record>
+
+
+        <!--Mail Template for Service Proposal Follow up-->
+        <record id="service_proposal_followup_mai" model="mail.template">
+            <field name="name">Service Proposal (Follow Up) - Send by Email</field>
+            <field name="model_id" ref="crm_extended.model_sale_order"/>
+            <field name="subject">Service Proposal (Follow Up) : ${ctx.get('name')}</field>
+            <!--            <field name="email_from">${(user.email and '%s &lt;%s&gt;' %(user.name, user.email) or '')|safe}</field>-->
+            <field name="email_to">${ctx.get('team_leader')}</field>
+            <field name="report_template" ref="sale.action_report_saleorder"/>
+            <field name="email_cc">${ctx.get('email_to')}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html"><![CDATA[
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+                <tr><td valign="middle">
+                    <span style="font-size: 10px;">Your Service Engagement</span><br/>
+                    <span style="font-size: 20px; font-weight: bold;">
+                       ${ctx.get('name')}
+                    </span>
+                </td><td valign="middle" align="right">
+                   <div style="width: 45%;float: top;">
+                        <img src='/web/binary/company_logo' style="width:30%"/>
+                    </div>
+                </td></tr>
+                <tr><td colspan="2" style="text-align:center;">
+                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+                </td></tr>
+            </table>
+                <p> Dear ${ctx.get('team_name')} Team,
+            <br/>
+            <br/>
+            Service Proposal of ${ctx.get('name')} amounting in ${ctx.get('sale_amount')} is ready for review.
+                <br/>
+                Do not hesitate to contact us if you have any questions.
+                <br/>
+                <br/>
+                <p align="center">
+                    <a target="_blank" href="${ctx.get('url')}" style="border-radius: 25px;padding:10px;color: #fefefe;background-color: #ea714b;border-style: solid;" class='oe_highlight'">
+                        <b>View Service Proposal</b>
+                    </a>
+                </p>
+                <br/>
+                <br/>
+                <br/>
+            Regards,<br/>
+            ${object.user_id.name}
+            <br/>
+            <br/>
+            <br/>
+
+            <p align="center">----------------------------------This is a system generated email----------------------------------------------</p></p>
+
+                <tr align="center">
+                    <td align="center" style="min-width: 590px; padding: 0 8px 0 8px; font-size:11px;">
+                        <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin: 16px 0px 4px 0px;"/>
+                        <b>${object.company_id.name}<b/>
+                        <div style="color: #999999;">
+                            ${object.company_id.phone} |
+                            ${object.company_id.email} |
+                            ${object.company_id.website}
+                        </div>
+                    </td>
+                </tr>
+            ]]>
+            </field>
+        </record>
+
+        <!--Mail Template for Service Proposal Alert-->
+        <record id="service_proposal_alert_mai" model="mail.template">
+            <field name="name">Service Proposal (Alert) - Send by Email</field>
+            <field name="model_id" ref="crm_extended.model_sale_order"/>
+            <field name="subject">Service Proposal (Alert): ${ctx.get('name')}</field>
+            <field name="report_template" ref="sale.action_report_saleorder"/>
+            <field name="email_from">${object.user_id.email}</field>
+            <field name="email_to">${ctx.get('email_to')}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html"><![CDATA[
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+                <tr><td valign="middle">
+                    <span style="font-size: 10px;">Your Service Engagement</span><br/>
+                    <span style="font-size: 20px; font-weight: bold;">
+                       ${ctx.get('name')}
+                    </span>
+                </td><td valign="middle" align="right">
+                   <div style="width: 45%;float: top;">
+                        <img src='/web/binary/company_logo' style="width:30%"/>
+                    </div>
+                </td></tr>
+                <tr><td colspan="2" style="text-align:center;">
+                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+                </td></tr>
+            </table>
+                <p> Dear ${ctx.get('team_name')} Team,
+            <br/>
+            <br/>
+            Service Proposal of ${ctx.get('name')} amounting in ${ctx.get('sale_amount')} is Forget to review. You Missed the Review on time, Kindly Check it.
+                <br/>
+                Do not hesitate to contact us if you have any questions.
+                <br/>
+                <br/>
+                <p align="center">
+                    <a target="_blank" href="${ctx.get('url')}" style="border-radius: 25px;padding:10px;color: #fefefe;background-color: #ea714b;border-style: solid;" class='oe_highlight'">
+                        <b>View Service Proposal</b>
+                    </a>
+                </p>
+                <br/>
+                <br/>
+                <br/>
+            Regards,<br/>
+            ${object.user_id.name}
+            <br/>
+            <br/>
+            <br/>
+
+            <p align="center">----------------------------------This is a system generated email----------------------------------------------</p></p>
+
+                <tr align="center">
+                    <td align="center" style="min-width: 590px; padding: 0 8px 0 8px; font-size:11px;">
+                        <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin: 16px 0px 4px 0px;"/>
+                        <b>${object.company_id.name}<b/>
+                        <div style="color: #999999;">
+                            ${object.company_id.phone} |
+                            ${object.company_id.email} |
+                            ${object.company_id.website}
+                        </div>
+                    </td>
+                </tr>
+            ]]>
+            </field>
+        </record>
+
+        <!--Mail Template for Project Task Confirm-->
+        <record id="eeeeeeeeweeeeeewweeeeeeeteeeeeee" model="mail.template">
+            <field name="name">Task Completed - Send by Email</field>
+            <field name="model_id" ref="crm_extended.model_project_task"/>
+            <field name="subject">Task Completed: ${ctx.get('name')}</field>
+            <field name="email_from">${ctx.get('email_from')}</field>
+            <field name="email_to">${ctx.get('email_to')}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html"><![CDATA[
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+                <tr><td valign="middle">
+                    <span style="font-size: 10px;">Your Project Task</span><br/>
+                    <span style="font-size: 20px; font-weight: bold;">
+                       ${ctx.get('name')}
+                    </span>
+                </td><td valign="middle" align="right">
+                   <div style="width: 45%;float: top;">
+                        <img src='/web/binary/company_logo' style="width:30%"/>
+                    </div>
+                </td></tr>
+                <tr><td colspan="2" style="text-align:center;">
+                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+                </td></tr>
+            </table>
+                <p> Dear ${ctx.get('employee_name')},
+            <br/>
+            <br/>The <b>${ctx.get('project_name')}</b> of The <b>${ctx.get('name')}</b> has been Approved by the <b>${ctx.get('manager_name')}</b>.
+                <br/>
+                <br/>
+                 <p align="center"><a target="_blank" href="${ctx.get('url')}" style="border-radius: 25px;padding:10px 15px;color: #fefefe;background-color: #ea714b;border-style: solid;" class='oe_highlight'"><b>View Task</b></a></p>
+                <br/>
+                <br/>
+                <br/>
+            Regards,<br/>
+            ${ctx.get('manager_name')}
+            <br/>
+            <br/>
+            <br/>
+
+            <p align="center">----------------------------------This is a system generated email----------------------------------------------</p></p>
+
+                <tr align="center">
+                    <td align="center" style="min-width: 590px; padding: 0 8px 0 8px; font-size:11px;">
+                        <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin: 16px 0px 4px 0px;"/>
+                        <b>${object.company_id.name}<b/>
+                        <div style="color: #999999;">
+                            ${object.company_id.phone} |
+                            ${object.company_id.email} |
+                            ${object.company_id.website}
+                        </div>
+                    </td>
+                </tr>
+            ]]>
+            </field>
+        </record>
+
+        <!--Mail Template for Project Task Reject-->
+        <record id="pq" model="mail.template">
+            <field name="name">Task Rejected - Send by Email</field>
+            <field name="model_id" ref="crm_extended.model_project_task"/>
+            <field name="subject">Task Rejected: ${ctx.get('name')}</field>
+            <field name="email_from">${ctx.get('email_from')}</field>
+            <field name="email_to">${ctx.get('email_to')}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html"><![CDATA[
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+                <tr><td valign="middle">
+                    <span style="font-size: 10px;">Your Project Task</span><br/>
+                    <span style="font-size: 20px; font-weight: bold;">
+                       ${ctx.get('name')}
+                    </span>
+                </td><td valign="middle" align="right">
+                   <div style="width: 45%;float: top;">
+                        <img src='/web/binary/company_logo' style="width:30%"/>
+                    </div>
+                </td></tr>
+                <tr><td colspan="2" style="text-align:center;">
+                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+                </td></tr>
+            </table>
+                <p> Dear ${ctx.get('employee_name')},
+            <br/>
+            <br/>The <b>${ctx.get('project_name')}</b> of The <b>${ctx.get('name')}</b> has been Rejected by the <b>${ctx.get('manager_name')}</b>.
+                <br/>
+                <br/>
+                 <p align="center"><a target="_blank" href="${ctx.get('url')}" style="border-radius: 25px;padding:10px 15px;color: #fefefe;background-color: #ea714b;border-style: solid;" class='oe_highlight'"><b>View Task</b></a></p>
+                <br/>
+                <br/>
+                <br/>
+            Regards,<br/>
+            ${ctx.get('manager_name')}
+            <br/>
+            <br/>
+            <br/>
+
+            <p align="center">----------------------------------This is a system generated email----------------------------------------------</p></p>
+
+            <tr align="center">
+                    <td align="center" style="min-width: 590px; padding: 0 8px 0 8px; font-size:11px;">
+                        <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin: 16px 0px 4px 0px;"/>
+                        <b>${object.company_id.name}<b/>
+                        <div style="color: #999999;">
+                            ${object.company_id.phone} |
+                            ${object.company_id.email} |
+                            ${object.company_id.website}
+                        </div>
+                    </td>
+                </tr>
+            ]]>
+            </field>
+        </record>
+
+        <!--Mail Template for Project Task Approval Request-->
+        <record id="rrrrr" model="mail.template">
+            <field name="name">Task Approval Request - Send by Email</field>
+            <field name="model_id" ref="crm_extended.model_project_task"/>
+            <field name="subject">Task Approval Request: ${ctx.get('name')}</field>
+            <field name="email_from">${ctx.get('email_to')}</field>
+            <field name="email_to">${ctx.get('email_from')}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html"><![CDATA[
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+                <tr><td valign="middle">
+                    <span style="font-size: 10px;">Your Project Task</span><br/>
+                    <span style="font-size: 20px; font-weight: bold;">
+                       ${ctx.get('name')}
+                    </span>
+                </td><td valign="middle" align="right">
+                   <div style="width: 45%;float: top;">
+                        <img src='/web/binary/company_logo' style="width:30%"/>
+                    </div>
+                </td></tr>
+                <tr><td colspan="2" style="text-align:center;">
+                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+                </td></tr>
+            </table>
+                <p> Dear ${ctx.get('manager_name')},
+            <br/>
+            <br/>The <b>${ctx.get('project_name')}</b> of The <b>${ctx.get('name')}</b> has been completed by the <b>${ctx.get('employee_name')}</b>, and requested your approval to confirm it.
+                <br/>
+                <br/>
+                 <p align="center"><a target="_blank" href="${ctx.get('url')}" style="border-radius: 25px;padding:10px 15px;color: #fefefe;background-color: #ea714b;border-style: solid;" class='oe_highlight'"><b>View Task</b></a></p>
+                <br/>
+                <br/>
+                <br/>
+            Regards,<br/>
+            ${ctx.get('employee_name')}
+            <br/>
+            <br/>
+            <br/>
+
+            <p align="center">----------------------------------This is a system generated email----------------------------------------------</p></p>
+
+            <tr align="center">
+                <td align="center" style="min-width: 590px; padding: 0 8px 0 8px; font-size:11px;">
+                    <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin: 16px 0px 4px 0px;"/>
+                    <b>${object.company_id.name}<b/>
+                    <div style="color: #999999;">
+                        ${object.company_id.phone} |
+                        ${object.company_id.email} |
+                        ${object.company_id.website}
+                    </div>
+                </td>
+            </tr>
+            ]]>
+            </field>
+        </record>
+
+        <!--Mail Template for Advance Payment Notification-->
+        <record id="mlmlmadmmlml" model="mail.template">
+            <field name="name">Service Engagement Advance Payment Notification - Send by Email</field>
+            <field name="model_id" ref="crm_extended.model_sale_order"/>
+            <field name="subject">Service Engagement Advance Payment Notification:</field>
+            <field name="email_from">${object.user_id.email}</field>
+            <field name="email_to">${ctx.get('email_to')}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html"><![CDATA[
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+                <tr><td valign="middle">
+                    <span style="font-size: 10px;">Your Service Engagement Advance Payment</span><br/>
+                </td><td valign="middle" align="right">
+                   <div style="width: 45%;float: top;">
+                        <img src='/web/binary/company_logo' style="width:30%"/>
+                    </div>
+                </td></tr>
+                <tr><td colspan="2" style="text-align:center;">
+                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+                </td></tr>
+            </table>
+                <p> Dear Accountant Team,
+            <br/>
+            <br/>
+            The Following Service Engagement requires Advanced Payment process from customers, Please check and process the payment.
+                Do not hesitate to contact us if you have any questions.
+                <br/>
+                <br/>
+                <br/>
+                <br/>
+                <br/>
+                <table class="table table-sm table-bordered">
+                    <thead style="background:#ea714b;color:#fefefe">
+                        <tr>
+                            <th class="padding_all tbottom ttop text-center">
+                                <strong>Name</strong>
+                            </th>
+                            <th class="padding_all tbottom ttop text-center">
+                                <strong>Team</strong>
+                            </th>
+                            <th class="padding_all tbottom ttop text-center">
+                                <strong>Date</strong>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    % if object.get_record_ids():
+                        % for values in object.get_record_ids()
+                        <tr>
+                            <td style="background: #ea714b;">
+                                <a target="_blank" href="${values['url']}">
+                                    <b style="color: #fefefe;">${values['name']}</b>
+                                 </a>
+                            </td>
+                            <td>${values['team']}</td>
+                            <td>${values['date']}</td>
+                        </tr>
+                        % endfor
+                        % endif
+                    </tbody>
+                </table>
+
+                <br/>
+                <br/>
+                <br/>
+            Regards,<br/>
+            ${object.user_id.name}
+            <br/>
+            <br/>
+            <br/>
+
+            <p align="center">----------------------------------This is a system generated email----------------------------------------------</p></p>
+
+                <tr align="center">
+                    <td align="center" style="min-width: 590px; padding: 0 8px 0 8px; font-size:11px;">
+                        <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin: 16px 0px 4px 0px;"/>
+                        <b>${object.company_id.name}<b/>
+                        <div style="color: #999999;">
+                            ${object.company_id.phone} |
+                            ${object.company_id.email} |
+                            ${object.company_id.website}
+                        </div>
+                    </td>
+                </tr>
+            ]]>
+            </field>
+        </record>
+
+
+    </data>
+</odoo>
