@@ -4,12 +4,17 @@ from odoo import api, fields, models
 
 
 class HotelFolio(models.Model):
-
     _inherit = "hotel.folio"
     _order = "reservation_id desc"
 
     reservation_id = fields.Many2one(
         "hotel.reservation", "Reservation", ondelete="restrict"
+    )
+    hotel_house_keeping_orders_ids = fields.One2many(
+        "house.keeping.details", 'proforma_id'
+    )
+    hotel_laundry_orders_ids = fields.One2many(
+        "laundry.details", 'proforma_id'
     )
 
     def write(self, vals):
@@ -34,7 +39,6 @@ class HotelFolio(models.Model):
 
 
 class HotelFolioLine(models.Model):
-
     _inherit = "hotel.folio.line"
 
     @api.onchange("checkin_date", "checkout_date")
@@ -44,15 +48,15 @@ class HotelFolioLine(models.Model):
         for room in self.env["hotel.room"].search([]):
             assigned = False
             for line in room.room_reservation_line_ids.filtered(
-                lambda l: l.status != "cancel"
+                    lambda l: l.status != "cancel"
             ):
                 if self.checkin_date and line.check_in and self.checkout_date:
                     if (self.checkin_date <= line.check_in <= self.checkout_date) or (
-                        self.checkin_date <= line.check_out <= self.checkout_date
+                            self.checkin_date <= line.check_out <= self.checkout_date
                     ):
                         assigned = True
                     elif (line.check_in <= self.checkin_date <= line.check_out) or (
-                        line.check_in <= self.checkout_date <= line.check_out
+                            line.check_in <= self.checkout_date <= line.check_out
                     ):
                         assigned = True
             if not assigned:
@@ -95,3 +99,53 @@ class HotelFolioLine(models.Model):
                         }
                         rm_lines.write(rm_line_vals)
         return super(HotelFolioLine, self).write(vals)
+
+
+# class HotelHousekeeping(models.Model):
+#     _inherit = "hotel.housekeeping"
+#
+#     def room_done(self):
+#         folio_id = self.env["hotel.folio"].search(['reservation_id', '=', 'res_id'])
+#         print('=======================================', folio_id)
+#
+#         res = super(HotelHousekeeping, self).room_done()
+#         return res
+
+
+class HouseKeepingDetails(models.Model):
+    _name = 'house.keeping.details'
+    _description = 'House Keeping Details'
+
+    proforma_id = fields.Many2one('hotel.folio')
+    current_date = fields.Date('Date')
+    clean_type = fields.Selection(
+        [
+            ("daily", "Daily"),
+            ("checkin", "Check-In"),
+            ("checkout", "Check-Out"),
+        ],
+        "Clean Type",
+    )
+    room_id = fields.Many2one(
+        "hotel.room",
+        "Room No",
+    )
+    inspector_id = fields.Many2one(
+        "res.users",
+        "Inspector",
+    )
+    inspect_date_time = fields.Datetime(
+        "Inspect Date Time",
+    )
+
+
+class LaundryDetails(models.Model):
+    _name = 'laundry.details'
+    _description = 'Laundry Details'
+
+    proforma_id = fields.Many2one('hotel.folio')
+    name = fields.Char(string="Label", copy=False)
+    partner_id = fields.Many2one('res.partner', string='Guest')
+    order_date = fields.Datetime(string="Date")
+    laundry_person = fields.Many2one('res.users', string='Laundry Person')
+    total_amount = fields.Float(string='Total')

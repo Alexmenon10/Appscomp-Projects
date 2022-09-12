@@ -204,6 +204,10 @@
                             <field name="is_folio"/>
                             <newline/>
                             <field
+                                    name="res_id"
+                                    attrs="{'invisible':[('is_folio','=',False)], 'required':[('is_folio','=',True)]}"
+                            />
+                            <field
                                     name="folio_id"
                                     attrs="{'invisible':[('is_folio','=',False)], 'required':[('is_folio','=',True)]}"
                             />
@@ -602,6 +606,10 @@
                             <field name="is_folio"/>
                         </group>
                         <group colspan="2" col="4">
+                            <field
+                                    name="res_id"
+                                    attrs="{'invisible': [('is_folio','=',False)]}"
+                            />
                             <field
                                     name="folio_id"
                                     attrs="{'invisible':[('is_folio','=',False)], 'required':[('is_folio','=',True)]}"

@@ -19,7 +19,9 @@ class HotelReservation(models.Model):
         for res in self:
             res.update({"no_of_folio": len(res.folio_id.ids)})
 
-    reservation_no = fields.Char("Reservation No", readonly=True, copy=False)
+    reservation_no = fields.Char("Reservation No", readonly=True, copy=False,
+                                 compute='get_reservation_num',
+                                 store=True)
     date_order = fields.Datetime(
         "Date Ordered",
         readonly=True,
@@ -134,6 +136,7 @@ class HotelReservation(models.Model):
     advance_payment = fields.Float(string="Advance")
     proof_type = fields.Binary(string='Proof')
 
+
     @api.depends('checkin', 'checkout')
     @api.onchange('checkin', 'checkout')
     def _calculate_hrs(self):
@@ -198,6 +201,7 @@ class HotelReservation(models.Model):
         ctx.update({"duplicate": True})
         return super(HotelReservation, self.with_context(ctx)).copy()
 
+
     # @api.constrains("reservation_line", "adults", "children")
     def _check_reservation_rooms(self):
         """
@@ -252,9 +256,24 @@ class HotelReservation(models.Model):
                 }
             )
 
-    #
+    @api.depends('partner_id')
+    @api.onchange('partner_id')
+    def get_reservation_num(self):
+        if self.reservation_no:
+            for val in self.reservation_line:
+                room_code = val.reserve.room_no
+                # type_code = val.reserve.room_categ_id.short_code
+                floor_code = val.reserve.floor_id.short_code
+                self.reservation_no = room_code + '/' + floor_code + '/' + self.reservation_no
+            # vals["reservation_no"] = (
+            #         self.env["ir.sequence"].next_by_code("hotel.reservation") or "New"
+            # )
+            # print('***********************************************', res_code)
+
     @api.model
     def create(self, vals):
+        # res = super(HotelReservation, self).create(vals)
+        # res.get_reservation_num()
         """
         Overrides orm create method.
         @param self: The object pointer
@@ -263,8 +282,6 @@ class HotelReservation(models.Model):
         vals["reservation_no"] = (
                 self.env["ir.sequence"].next_by_code("hotel.reservation") or "New"
         )
-        # print("========================================", vals)
-
         return super(HotelReservation, self).create(vals)
 
     def check_overlap(self, date1, date2):
@@ -278,6 +295,7 @@ class HotelReservation(models.Model):
         @param self: The object pointer
         @return: new record set for hotel room reservation line.
         """
+        print('************************SUccess***************************')
         self._check_reservation_rooms()
         reservation_line_obj = self.env["hotel.room.reservation.line"]
         vals = {}
@@ -534,6 +552,7 @@ class HotelReservation(models.Model):
         else:
             action = {"type": "ir.actions.act_window_close"}
         return action
+
 
 
 #

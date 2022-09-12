@@ -2,6 +2,8 @@
 from datetime import datetime
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from datetime import datetime, timedelta
+
 
 
 class QuickRoomReservation(models.TransientModel):
@@ -18,6 +20,10 @@ class QuickRoomReservation(models.TransientModel):
         "hotel.room",
         string="Room"
     )
+    room_category = fields.Many2one(related='room_id.room_categ_id', string='Room Category')
+    room_floor_id = fields.Many2one(related='room_id.floor_id', string='Floor')
+    room_capacity = fields.Integer(related='room_id.capacity', string='Room Capacity')
+    room_no = fields.Char(related='room_id.room_no', string='Room No')
     company_id = fields.Many2one(
         "res.company",
         string="Hotel",
@@ -50,6 +56,7 @@ class QuickRoomReservation(models.TransientModel):
         related='room_id.image_1920'
     )
     adults = fields.Integer("Adults")
+    children = fields.Integer("Children")
     guest_creation = fields.Selection(
         [("exist", "Exist"),
          ("new", "New")],
@@ -86,6 +93,12 @@ class QuickRoomReservation(models.TransientModel):
     advance_amt = fields.Float(string="Advance Payment")
     add_proof_type = fields.Many2one("identity.register", string="Proof Type")
     add_proof = fields.Binary(string='Proof')
+
+    active = fields.Boolean('Active', tracking=True)
+    reserve_date = fields.Date(string="Date")
+    check_in_time = fields.Char(string="Check In Time")
+    check_out_time = fields.Char(string="Check Out Time")
+
 
     @api.onchange('search_mobile')
     def _compute_mobile(self):
@@ -161,6 +174,11 @@ class QuickRoomReservation(models.TransientModel):
         """
         res = super(QuickRoomReservation, self).default_get(fields)
         keys = self._context.keys()
+        print("===============================", keys,"==================",self._context.values())
+        if "date" in keys:
+            res.update({"reserve_date": self._context["date"]})
+        if "entry" in keys:
+            res.update({"check_in_time": self._context["entry"]})
         if "date" in keys:
             res.update({"check_in": self._context["date"]})
         if "room_id" in keys:
@@ -168,7 +186,6 @@ class QuickRoomReservation(models.TransientModel):
             res.update({"room_id": int(roomid)})
         return res
 
-    #
     def room_reserve(self):
 
         """
@@ -189,15 +206,40 @@ class QuickRoomReservation(models.TransientModel):
             )
         res_partner = self.env['res.partner'].sudo().search([
             ('name', '=', self.partner_id.name)])
-        print("=====================", res_partner)
         res_partner.write({
             'proof_img': self.add_proof,
         })
-        for res in self:
-            if self.advance_amt == 0:
-                print('*************ZERO******************')
-                rec = hotel_res_obj.create(
-                    {
+        if self.check_in and self.check_out:
+            for res in self:
+                if self.advance_amt == 0:
+                    rec = hotel_res_obj.create(
+                        {
+                            "partner_id": res.partner_id.id,
+                            "partner_invoice_id": res.partner_invoice_id.id,
+                            "partner_order_id": res.partner_order_id.id,
+                            "partner_shipping_id": res.partner_shipping_id.id,
+                            "checkin": res.check_in,
+                            "checkout": res.check_out,
+                            "company_id": res.company_id.id,
+                            "pricelist_id": res.pricelist_id.id,
+                            "adults": res.adults,
+                            "proof_type":res.add_proof,
+                            "advance_payment": res.advance_amt,
+                            "reservation_line": [
+                                (
+                                    0,
+                                    0,
+                                    {
+                                        "reserve": [(6, 0, res.room_id.ids)],
+                                        "name": res.room_id.name or " ",
+                                    },
+                                )
+                            ],
+                        }
+                    )
+                else:
+                    hotel_res_obj.confirmed_reservation()
+                    hotel_res_obj.create({
                         "partner_id": res.partner_id.id,
                         "partner_invoice_id": res.partner_invoice_id.id,
                         "partner_order_id": res.partner_order_id.id,
@@ -207,7 +249,8 @@ class QuickRoomReservation(models.TransientModel):
                         "company_id": res.company_id.id,
                         "pricelist_id": res.pricelist_id.id,
                         "adults": res.adults,
-                        "proof_type":res.add_proof,
+                        "proof_type": res.add_proof,
+                        "state":"confirm",
                         "advance_payment": res.advance_amt,
                         "reservation_line": [
                             (
@@ -219,51 +262,127 @@ class QuickRoomReservation(models.TransientModel):
                                 },
                             )
                         ],
+                    })
+                    hotel_res_obj_new= self.env["hotel.reservation"].search([
+                        ("partner_id", "=", res.partner_id.id),
+                        ("checkin", "=", res.check_in),
+                        ("checkout", "=", res.check_out),
+                        ("adults", "=", res.adults),
+                        # ("reservation_line.name", "=", res.room_id.name),
+                    ])
+                    vals = {
+                        "room_id": res.room_id.id,
+                        "check_in": res.check_in,
+                        "check_out": res.check_out,
+                        "state": "assigned",
+                        "status": "confirm",
+                        "reservation_id": hotel_res_obj_new.id,
                     }
-                )
-            else:
-                print('************* NON ZERO******************')
-                hotel_res_obj.create({
-                    "partner_id": res.partner_id.id,
-                    "partner_invoice_id": res.partner_invoice_id.id,
-                    "partner_order_id": res.partner_order_id.id,
-                    "partner_shipping_id": res.partner_shipping_id.id,
-                    "checkin": res.check_in,
-                    "checkout": res.check_out,
-                    "company_id": res.company_id.id,
-                    "pricelist_id": res.pricelist_id.id,
-                    "adults": res.adults,
-                    "proof_type": res.add_proof,
-                    "state":"confirm",
-                    "advance_payment": res.advance_amt,
-                    "reservation_line": [
-                        (
-                            0,
-                            0,
-                            {
-                                "reserve": [(6, 0, res.room_id.ids)],
-                                "name": res.room_id.name or " ",
-                            },
-                        )
-                    ],
-                })
-                hotel_res_obj_new= self.env["hotel.reservation"].search([
-                ("partner_id", "=", res.partner_id.id),
-                ("checkin", "=", res.check_in),
-                ("checkout", "=", res.check_out),
-                ("adults", "=", res.adults),
-                # ("reservation_line.name", "=", res.room_id.name),
-                ])
-                vals = {
-                    "room_id": res.room_id.id,
-                    "check_in": res.check_in,
-                    "check_out": res.check_out,
-                    "state": "assigned",
-                    "status": "confirm",
-                    "reservation_id": hotel_res_obj_new.id,
-                }
-                # self.env["hotel.room.reservation.line"].create(vals)
-                self.room_id.room_reservation_line_ids.create(vals)
+                    # self.env["hotel.room.reservation.line"].create(vals)
+                    self.room_id.room_reservation_line_ids.create(vals)
+
+        if self.reserve_date and self.check_in_time and self.check_out_time:
+            ref_date1 = self.reserve_date
+            chk_in_time = self.check_in_time
+            chk_out_time = self.check_out_time
+            import datetime
+            d11 = str(ref_date1)
+            print("================ Zero =====================", self.reserve_date)
+            dt21 = datetime.datetime.strptime(d11, '%Y-%m-%d')
+            date1 = dt21.strftime("%Y-%m-%d")
+            print("The date format is", date1, type(date1))
+            d22 = str(chk_in_time)
+            dt22 = datetime.datetime.strptime(d22, "%H:%M")
+            check_in_time = dt22.strftime("%H:%M")
+            datetime_object = date1 + ' ' + check_in_time + ":00"
+            print("THe final result is", datetime_object)
+
+            if self.check_out_time:
+                d33 = str(chk_out_time)
+                dt33 = datetime.datetime.strptime(d33, "%H:%M")
+                check_out_time = dt33.strftime("%H:%M")
+                datetime_object_2 = date1 + ' ' + check_out_time + ":00"
+                print("THe final result is", datetime_object_2)
+
+            for res in self:
+                date_time_1 = datetime.datetime.strptime(datetime_object, "%Y-%m-%d %H:%M:%S")
+                date_time_2 = datetime.datetime.strptime(datetime_object_2, "%Y-%m-%d %H:%M:%S")
+                datetime_object_11 = date_time_1 - timedelta(hours=5, minutes=30)
+                datetime_object_12 = date_time_2 - timedelta(hours=5, minutes=30)
+                print(datetime_object_11, "===============", datetime_object_12)
+
+                if self.advance_amt == 0:
+                    print('*************ZERO******************')
+                    rec = hotel_res_obj.create(
+                        {
+                            "partner_id": res.partner_id.id,
+                            "partner_invoice_id": res.partner_invoice_id.id,
+                            "partner_order_id": res.partner_order_id.id,
+                            "partner_shipping_id": res.partner_shipping_id.id,
+                            "checkin": datetime_object_11,
+                            "checkout": datetime_object_12,
+                            "company_id": res.company_id.id,
+                            "pricelist_id": res.pricelist_id.id,
+                            "adults": res.adults,
+                            "proof_type": res.add_proof,
+                            "advance_payment": res.advance_amt,
+                            "reservation_line": [
+                                (
+                                    0,
+                                    0,
+                                    {
+                                        "reserve": [(6, 0, res.room_id.ids)],
+                                        "name": res.room_id.name or " ",
+                                    },
+                                )
+                            ],
+                        }
+                    )
+                else:
+                    hotel_res_obj.create({
+                        "partner_id": res.partner_id.id,
+                        "partner_invoice_id": res.partner_invoice_id.id,
+                        "partner_order_id": res.partner_order_id.id,
+                        "partner_shipping_id": res.partner_shipping_id.id,
+                        "checkin": datetime_object_11,
+                        "checkout": datetime_object_12,
+                        "company_id": res.company_id.id,
+                        "pricelist_id": res.pricelist_id.id,
+                        "adults": res.adults,
+                        "proof_type": res.add_proof,
+                        "state": "confirm",
+                        "advance_payment": res.advance_amt,
+                        "reservation_line": [
+                            (
+                                0,
+                                0,
+                                {
+                                    "reserve": [(6, 0, res.room_id.ids)],
+                                    "name": res.room_id.name or " ",
+                                },
+                            )
+                        ],
+                    })
+                    hotel_res_obj_new = self.env["hotel.reservation"].search([
+                        ("partner_id", "=", res.partner_id.id),
+                        ("checkin", "=", datetime_object_11),
+                        ("checkout", "=", datetime_object_12),
+                        ("adults", "=", res.adults),
+                        # ("reservation_line.name", "=", res.room_id.name),
+                    ])
+                    vals = {
+                        "room_id": res.room_id.id,
+                        "check_in": datetime_object_11,
+                        "check_out": datetime_object_12,
+                        "state": "assigned",
+                        "status": "confirm",
+                        "reservation_id": hotel_res_obj_new.id,
+                    }
+                    print(vals)
+                    self.room_id.room_reservation_line_ids.sudo().create(vals)
+
+
+
         return rec
 
     @api.onchange('create_guest')
@@ -283,4 +402,5 @@ class QuickRoomReservation(models.TransientModel):
                 self.write({
                     'guest_creation': 'exist',
                     'partner_id': partner.id,
+                    'search_mobile': val.mobile,
                 })

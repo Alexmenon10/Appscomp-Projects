@@ -66,7 +66,6 @@ class ApprovalRequest(models.Model):
                 current_approver = users_to_approver[user.id]
                 if current_approver and current_approver.required != required:
                     approver_id_vals.append(Command.update(current_approver.id, {'required': required}))
-                    print(approver_id_vals,"=======================pppppppppppppppppp")
                 elif not current_approver:
                     approver_id_vals.append(Command.create({
                         'user_id': user.id,

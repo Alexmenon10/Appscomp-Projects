@@ -71,6 +71,7 @@
                         <group>
                             <field name="current_date" />
                             <field name="clean_type" />
+                            <field name="res_id" />
                             <field name="room_id" />
                         </group>
                         <group>

@@ -157,6 +157,7 @@ class HotelRestaurantReservation(models.Model):
     reservation_id = fields.Char("Reservation No", readonly=True, index=True)
     room_id = fields.Many2one("product.product", "Room No")
     folio_id = fields.Many2one("hotel.folio", "Folio No")
+    res_id = fields.Many2one("hotel.reservation", "Ref No")
     start_date = fields.Datetime(
         "Start Time", required=True, default=lambda self: fields.Datetime.now()
     )
@@ -179,7 +180,7 @@ class HotelRestaurantReservation(models.Model):
             ("cancel", "Cancelled"),
             ("order", "Order Created"),
         ],
-        "state",
+        "State",
         required=True,
         readonly=True,
         copy=False,
@@ -189,6 +190,14 @@ class HotelRestaurantReservation(models.Model):
 
     table_cancel_remarks = fields.Text(string='Table Cancel Remarks')
     table_cancel_remarks_2 = fields.Text(string='Table Cancel Remarks')
+
+    @api.onchange("res_id")
+    def _onchange_of_res_id(self):
+        for room in self.res_id.reservation_line:
+            self.write({
+                'room_id': room.id,
+                'customer_id': self.res_id.partner_id,
+            })
 
     def hotel_management_table_cancel(self):
         view_id = self.env['hotel.management.table.cancel']
@@ -414,6 +423,16 @@ class HotelRestaurantOrder(models.Model):
         "kit_id",
         "Rest",
     )
+    res_id = fields.Many2one("hotel.reservation", "Ref No")
+
+    @api.onchange("res_id")
+    def _onchange_of_res_id(self):
+        print('=========================================')
+        for room in self.res_id.reservation_line:
+            self.write({
+                'room_id': room.id,
+                'customer_id': self.res_id.partner_id,
+            })
 
 
     @api.model

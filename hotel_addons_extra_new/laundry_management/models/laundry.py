@@ -182,13 +182,10 @@ class LaundryManagement(models.Model):
     invoice_count = fields.Integer(compute='_invoice_count',
                                    string='# Invoice')
     work_count = fields.Integer(compute='_work_count', string='# Works')
-    partner_id = fields.Many2one('res.partner', string='Guest',
-                                 readonly=True,
+    partner_id = fields.Many2one('res.partner', string='Guest', related='res_id.partner_id',
                                  states={'draft': [('readonly', False)],
                                          'order': [('readonly', False)]},
-                                 required=True,
-                                 change_default=True, index=True,
-                                 track_visibility='always')
+                                 required=True,)
     partner_invoice_id = fields.Many2one('res.partner',
                                          string='Invoice Address',
                                          readonly=True, required=True,
@@ -225,6 +222,8 @@ class LaundryManagement(models.Model):
 
     landry_cancel_remarks = fields.Text(string='Landry Cancel Remarks')
     landry_cancel_remarks_2 = fields.Text(string='Landry Cancel Remarks')
+
+    res_id = fields.Many2one("hotel.reservation", "Ref No")
 
     def hotel_landry_cancel(self):
         view_id = self.env['landry.order.cancel']
@@ -356,6 +355,23 @@ class Washing(models.Model):
                 break
         if f == 0:
             self.laundry_obj.laundry_obj.state = 'done'
+            folio_id = self.env["hotel.folio"].search([("reservation_id", "=", self.laundry_obj.laundry_obj.res_id.id)])
+            print('====================', folio_id)
+            if folio_id:
+                line_vals = []
+                vals = [0, 0, {
+                    "name": self.laundry_obj.laundry_obj.name,
+                    "partner_id": self.laundry_obj.laundry_obj.partner_id.id,
+                    "order_date": self.laundry_obj.laundry_obj.order_date,
+                    "laundry_person": self.laundry_obj.laundry_obj.laundry_person.id,
+                    "total_amount": self.laundry_obj.laundry_obj.total_amount,
+                }]
+                line_vals.append(vals)
+            else:
+                raise ValidationError(_("Alert!, Please Create a Folio against the Reservation"))
+            folio_id.update({
+                'hotel_laundry_orders_ids': line_vals,
+            })
         laundry_obj1 = self.search([('laundry_obj', '=', self.laundry_obj.id)])
         f1 = 0
         for each in laundry_obj1:
