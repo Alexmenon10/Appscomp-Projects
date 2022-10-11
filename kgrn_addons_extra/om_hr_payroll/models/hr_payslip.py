@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 from pytz import timezone
 from odoo import api, fields, models, tools, _
 from odoo.exceptions import UserError, ValidationError, Warning
+from datetime import timedelta
 
 
 class HrPayslip(models.Model):
@@ -89,10 +90,35 @@ class HrPayslip(models.Model):
     date_year = fields.Char(string="Year")
     leave_paid_timeoff = fields.Float(string="Paid Leave ")
     final_payslip_calcualte_amount = fields.Float(string="Final Pay")
-    number_working_of_days = fields.Float(string="Number of working Days ")
+    number_working_of_days = fields.Float(string="Number of working Days")
+    total_number_of_days = fields.Float(string="Total Number Of Days ")
+    total_balance_days = fields.Float(string="Total Balance Days ")
+    public_lop_count_days = fields.Integer(string="Public leave Count")
+    non_present_days = fields.Float(string='Non Present Days')
+    third_friday_date = fields.Date(string='Third Friday Date')
+    firday_boolean = fields.Boolean(string='Friday Boolean')
     number_of_leave = fields.Float(string="Public Leave's and Sunday's ")
     total_days_of_month = fields.Float(string="Total Days in Month ")
     employee_final_lop_total_days = fields.Integer(string="Employee Final LOP Days")
+    third_friday_date = fields.Date(string='Third Friday Date')
+    firday_boolean = fields.Boolean(string='Friday Boolean')
+    manual_attendance = fields.Float(string='Manual Attendance')
+    user_id = fields.Many2one('res.users', 'User')
+    update_date = fields.Datetime(string='Date')
+    update_check = fields.Boolean(string='Update..?')
+
+    def get_manual_attendance(self):
+        if self.manual_attendance:
+            if self.manual_attendance <= self.total_days_of_month:
+                self.write({
+                    'employee_final_present_days': self.manual_attendance,
+                    'user_id': self.env.user,
+                    'update_date': datetime.now(),
+                    'update_check': True,
+                })
+            else:
+                raise ValidationError(_('Alert! Manual Attendance %s is must be smaller than Total Days in Month %s.')
+                                      %(self.manual_attendance, self.total_days_of_month))
 
     @api.onchange('employee_id', 'date_from', 'date_to')
     def compute_days(self):
@@ -144,7 +170,7 @@ class HrPayslip(models.Model):
                               "SO, Please, Approve the Config and generate it.") % (
                                 record.date_months, record.date_year))
                 if month:
-                    print('#####################################', type(line.select_month),
+                    print(type(line.select_month),
                           type(record.date_from.month))
                 else:
                     raise ValidationError(
@@ -196,16 +222,27 @@ class HrPayslip(models.Model):
                 self.employee_loptotal_days = 0
 
     def get_employee_details(self):
+        self.employee_loptotal_days = 0.00
+        print('*****************111111111111*******************', self.employee_loptotal_days)
         employee_contract = self.env['hr.contract'].search([('employee_id', '=', self.employee_id.id)])
         employee_leave_aa = self.env['hr.leave'].search(
             [('employee_id', '=', self.employee_id.id), ('holiday_status_id.name', '=', 'Unpaid'),
              ('state', '=', 'validate')])
+        friday_config = self.env['hr.payroll.year'].search([('name', '=', self.date_year)])
         num_days = 0
+        up = 0
+        friday_count = 0
+        friday_lop_count = 0
         paid_leave_num_days = 0
         profitpercentday = 0
         total_wage = 0
+        get_third_saturday = 0
+        unpaid_amount_based_lop = 0
+        from datetime import datetime
+        currentMonth = datetime.now().month
         employee_leave_paid_time = self.env['hr.leave'].search(
-            [('employee_id', '=', self.employee_id.id), ('holiday_status_id.name', '!=', 'Unpaid')])
+            [('employee_id', '=', self.employee_id.id), ('holiday_status_id.name', '!=', 'Unpaid'),
+             ('state', '=', 'validate')])
         if self.employee_id:
             import calendar
             import datetime
@@ -213,6 +250,7 @@ class HrPayslip(models.Model):
             self.employee_one_day_salary = total_wage_contract
             total_unpaid_amount = (self.employee_balance_days + self.employee_loptotal_days) * total_wage_contract
             self.employee_final_lop_total_days = self.employee_balance_days + self.employee_loptotal_days
+            print('-------------------final---------------', self.employee_balance_days, self.employee_loptotal_days)
             try:
                 profitpercentday = (employee_contract.wage / self.total_days_of_month)
             except ZeroDivisionError:
@@ -232,18 +270,18 @@ class HrPayslip(models.Model):
             num_days += aa.number_of_days
         for bb in employee_leave_paid_time:
             employee_paid_leave = self.env['hr.leave'].search_count(
-                [('employee_id', '=', self.employee_id.id), ('holiday_status_id.name', '!=', 'Unpaid'),
-                 ('state', '=', 'validate')])
+                [('employee_id', '=', self.employee_id.id),
+                 ('holiday_status_id.name', '!=', 'Unpaid'),
+                 ('state', '=', 'validate')]
+            )
             if self.date_from.month == bb.request_date_from.month:
                 paid_leave_num_days += bb.number_of_days
                 self.leave_paid_timeoff = paid_leave_num_days
                 # self.final_payslip_calcualte_amount = paid_leave_num_days
 
         for unpaid in self.line_ids:
-            # print(unpaid.name)
             if unpaid.name == 'Unpaid':
                 print(unpaid.name == 'Unpaid')
-                # print('unpaid amount',unpaid.amount)
                 unpaid.write({
                     'amount': self.unpaid_deduction})
                 employee_contract.write({
@@ -260,6 +298,8 @@ class HrPayslip(models.Model):
                     num_dayss = emp_aa_leave.number_of_days
                     self.employee_loptotal_days = num_dayss
                     total_wage = employee_contract.wage / diff
+                    print('=========LOP=====================', num_dayss)
+
                     # self.employee_one_day_salary = total_wage
                     # total_unpaid_amount = (self.employee_balance_days + self.employee_loptotal_days) * total_wage
                     # final_wage = employee_contract.wage - (num_dayss * total_wage)
@@ -270,13 +310,174 @@ class HrPayslip(models.Model):
                     # # self.write({'employee_one_day_salary': total_wage,
                     #             'unpaid_deduction': total_unpaid_amount})
 
+    def get_public_leave_yesterday(self):
+        print('*****************222222222222*******************', self.employee_loptotal_days)
+        import datetime
+        from datetime import datetime
+        value_count = 0.00
+        leave_num_days = 0.00
+        ph_lop = 0.00
+        ph_lop_1 = 0.00
+        ph_lop_2 = 0.00
+        ph_lop_11 = 0.00
+        count = 0.00
+        count1 = 0.00
+        count2 = 0.00
+        ph_lop_3 = 0.00
+        count3 = 0.00
+        count4 = 0.00
+        non_present = 0.00
+        # ph_lop5 = 0.00
+        currentMonth = self.date_months
+        employee_attendance = self.env['hr.attendance'].search(
+            [('employee_id', '=', self.employee_id.id)])
+        employee_leave_aa = self.env['hr.leave'].search(
+            [('employee_id', '=', self.employee_id.id), ('state', '=', 'validate')])
+        public_leave_config = self.env['hr.public.holidays'].search([('year_id', '=', self.date_year)])
+        for attend in employee_attendance:
+            if currentMonth == attend.check_in.date().strftime('%B'):
+                for ad_pub in public_leave_config.holidays_ids:
+                    if currentMonth == ad_pub.date.strftime('%B'):
+                        # print('&*%*&^*&&*%%*&%*&%*(&((%(%(%(%', currentMonth, attend.check_in.date().strftime('%B'))
+                        count += 1
+                        public_holiday_attendance_check = ad_pub.date - timedelta(days=1)
+                        if attend.check_in.date() != public_holiday_attendance_check:
+                            ph_lop += 2
+                        # print('============fertgrygrrs==================', public_holiday_attendance_check,ph_lop, self.employee_loptotal_days)
+                        # if attend.check_in.date() != self.third_friday_date:
+                        #     ph_lop5 += 2
+                        for leave in employee_leave_aa:
+                            if currentMonth == leave.date_from.month:
+                                if leave.request_date_from == public_holiday_attendance_check:
+                                    ph_lop_1 += 1
+                            if currentMonth == leave.date_from.month and leave.holiday_status_id.name == 'Unpaid':
+                                if leave.request_date_from == public_holiday_attendance_check:
+                                    ph_lop_11 += 1 / self.employee_present_days
+        ph_lop_2 = ph_lop_1 / self.employee_present_days
+        ph_lop_3 = ph_lop / self.employee_present_days
+        count3 = count / self.employee_present_days
 
+        print('666666666666666666666666666', count1, count2, count3, count4, ph_lop_3, ph_lop_2,
+              self.employee_loptotal_days)
+        if count3 == ph_lop_2:
+            count1 += 1 - ph_lop_11
+            self.public_lop_count_days = count1
+            self.employee_loptotal_days += self.public_lop_count_days
+            print('lop_count 1----------------------------', self.public_lop_count_days)
+        if count3 == ph_lop_3:
+            count2 = ph_lop_3 * 1
+            self.public_lop_count_days = count2
+            self.employee_loptotal_days += self.public_lop_count_days
+            print('lop_count 2----------------------------', self.public_lop_count_days)
+        if ph_lop_2 > 0 and ph_lop_3 > 0:
+            count4 = ph_lop_3 - ph_lop_2 * 2
+            if count3 < ph_lop_2 and count < ph_lop:
+                self.public_lop_count_days = ph_lop_2 + count4 - ph_lop_11
+                self.employee_loptotal_days += self.public_lop_count_days
+                print('lop_count 3----------------------------', self.public_lop_count_days)
+            if count3 < ph_lop_2 or count < ph_lop:
+                self.public_lop_count_days = ph_lop_2 + count4 - ph_lop_11
+                self.employee_loptotal_days += self.public_lop_count_days
+            print('lop_count 4----------------------------', self.public_lop_count_days)
+        non_present = self.total_number_of_days - self.employee_final_present_days
+        self.non_present_days = non_present - self.employee_loptotal_days
+        self.employee_final_lop_total_days += self.public_lop_count_days
+        print('*^*^*^*^*^*^*^^*^*^*^*^*^*^*^*^*^*^*', self.manual_attendance)
+        if not self.user_id:
+            print('########SUCCESS######')
+            self.employee_final_present_days -= self.public_lop_count_days
+        else:
+            print('########SUCCESSSUCCESS######', self.manual_attendance)
+            self.employee_final_present_days == self.manual_attendance
+
+        print('-------------LOP 3.1 --------------', self.employee_loptotal_days, self.public_lop_count_days, self.employee_final_present_days)
+        # self.employee_loptotal_days += self.non_present_days
+        # print('-------------LOP 3 --------------', self.employee_loptotal_days)
+
+    def employee_attendance_leave(self):
+        print('*****************3333*******************', self.employee_loptotal_days)
+        count = 0.00
+        attendance = 0.00
+        timeoff_count = 0.00
+        public_holiday = 0.00
+        public_holiday1 = 0.00
+        profitpercent = 0.00
+        profitpercent1 = 0.00
+        in_list = []
+        timeoff_list = []
+        currentMonth = self.date_months
+        public_leave_config = self.env['hr.public.holidays'].search([('year_id', '=', self.date_year)])
+        unpaid_leave_timeoff = self.env['hr.leave'].search(
+            [('employee_id', '=', self.employee_id.id), ('holiday_status_id.name', '=', 'Unpaid'),
+             ('state', '=', 'validate')])
+        # self.employee_loptotal_days = unpaid_leave_timeoff.number_of_days
+        employee_timeoff = self.env['hr.leave'].search(
+            [('employee_id', '=', self.employee_id.id), ('holiday_status_id.name', '=', 'Unpaid'),
+             ('state', '!=', 'validate')])
+        print('==============', employee_timeoff, self.employee_loptotal_days)
+        if unpaid_leave_timeoff:
+            for lines in unpaid_leave_timeoff:
+                timeoff_list.append(lines.request_date_from)
+        if employee_timeoff:
+            for lines in employee_timeoff:
+                unpaid_lave_count_days = lines.number_of_days
+                if lines.request_date_from == self.third_friday_date:
+                    timeoff_count += 1
+                for line in self.employee_id.attendance_ids:
+                    in_list.append(line.check_in.date())
+                    if lines.request_date_from == self.third_friday_date or line.check_in.date() != self.third_friday_date:
+                        attendance += 2
+                if self.employee_present_days != 0:
+                    self.employee_loptotal_days = unpaid_lave_count_days + (attendance / self.employee_present_days)
+                print('------unpaid_lave_count_days------', unpaid_lave_count_days, self.employee_loptotal_days,
+                      attendance)
+        else:
+            for line in self.employee_id.attendance_ids:
+                in_list.append(line.check_in.date())
+                if line.check_in.date() != self.third_friday_date:
+                    attendance += 2
+                if self.employee_present_days != 0:
+                    self.employee_loptotal_days = (attendance / self.employee_present_days)
+        print('=================-------------000000000000000000000000', in_list, timeoff_list)
+        if public_leave_config:
+            for public in public_leave_config.holidays_ids:
+                if currentMonth == public.date.strftime('%B'):
+                    print('PUBLIC HOLIDAY __________________', public.date)
+                    public_holiday_date = public.date
+                    public_leave = public_holiday_date - timedelta(days=1)
+                    if public_leave not in in_list:
+                        profitpercent += 1
+                        print('SUCCESS*********************************************', profitpercent, timeoff_list)
+                    if timeoff_list:
+                        if public_leave in timeoff_list:
+                            profitpercent1 += 1
+                            print('SUCCESS 22*********************************************', profitpercent1, timeoff_list)
+
+        #         for emp in self.employee_id.attendance_ids:
+        #             if currentMonth == public.date.strftime('%B'):
+        #                 public_holiday_date = public.date
+        #                 public_leave = public_holiday_date - timedelta(days=1)
+        #                 # print('=============cingif================', public_leave, emp.check_in.date())
+        #                 if public_leave != emp.check_in.date() and public_leave != employee_timeoff.request_date_from:
+        #                     public_holiday += 2
+        #                     print('=======success======', public_holiday)
+        #                     try:
+        #                         profitpercent = (public_holiday / self.employee_present_days)
+        #                     except ZeroDivisionError:
+        #                         profitpercent = 0
+        #                 else:
+        #                     print('=======Fails======')
+        #                     profitpercent = 0
+        self.public_lop_count_days = profitpercent - profitpercent1
 
     def current_employee_attendance(self):
+        print('**********************1111**************', self.employee_loptotal_days)
         self.employee_year_month_button()
         if self.employee_id:
             self.get_employee_details()
             employee_attendance = self.env['hr.attendance'].search(
+                [('employee_id', '=', self.employee_id.id)])
+            employee_leave = self.env['hr.leave'].search(
                 [('employee_id', '=', self.employee_id.id)])
             # [('employee_id', '=', self.employee_id.id), ('custom_state', '=', 'approve')])
             emp_check_in = []
@@ -284,23 +485,65 @@ class HrPayslip(models.Model):
             count = 0.00
             present_amount = 0.00
             for attend in employee_attendance:
-                if self.date_from and self.date_to and self.employee_id.department_id.name != 'Call Center Team':
+                if self.date_from and self.date_to:
                     if attend.check_in and not attend.check_out and attend.check_in.month == self.date_from.month:
                         raise ValidationError(
-                            _("Alert!,The selected Employee of Mr/Mrs.%s. Attendance has False Value So, Payslip can't generate it.\n "
+                            _("Alert!,The selected Employee of Mr/Mrs.%s. Attendance has False Value So, Payslip "
+                              "can't generate it.\n "
                               "Please check it.") % (
                                 self.employee_id.name))
-                    if self.date_from.month == attend.check_in.month and self.date_to.month == attend.check_out.month and attend.check_in.day == attend.check_out.day:
-                        count += 1
-                elif self.employee_id.department_id.name == 'Call Center Team':
-                    if self.date_from.month == attend.check_in.month and self.date_to.month == attend.check_out.month and attend.check_in.day != attend.check_out.day:
+                    if self.date_from.month == attend.check_in.month and self.date_to.month == attend.check_out.month \
+                            and attend.check_in.day == attend.check_out.day:
                         count += 1
                 present_amount = (self.employee_final_present_days * self.employee_one_day_salary)
 
             self.write({
                 'employee_present_days': count,
                 'employee_final_present_days': count})
+            print('************abcd******************', self.employee_final_present_days)
+            attend_in = []
+            attend_out = []
+            if not self.employee_id.bulk_attendance_employee:
+                for attend in employee_attendance:
+                    attend_in.append(attend.check_in)
+                    attend_out.append(attend.check_out)
+                    for leave in employee_leave:
+                        if self.date_from and self.date_to:
+                            # print('*****************************', leave.request_date_from, self.date_from.month,
+                            # self.date_to.month, leave.request_date_from.month, leave.request_date_to.month)
+                            if self.date_from.month == self.date_to.month == \
+                                    leave.request_date_from.month == leave.request_date_to.month \
+                                    and attend.check_in.month and attend.check_out.month:
+                                # if leave.request_date_from not in attend_in and leave.request_date_to not in
+                                # attend_out: print('------------------COUNT--------')
+                                count += 1
+            else:
+                bulk_attendance = self.env['bulk.attendance'].search(
+                    [('emp_code', '=', self.employee_id.emp_code), ('month_list', '=', self.date_months),
+                     ('year_id', '=', self.date_year)])
+                count = bulk_attendance.number_of_days
+                self.employee_present_days = count
+                if count > 0:
+                    present_amount = (self.employee_final_present_days * self.employee_one_day_salary)
+                else:
+                    raise ValidationError(
+                        _("Alert !, Selected Employee %s is Bulk Employee Category ,"
+                          "So You Must Import the Bulk Attendance.")
+                        % self.employee_id.name)
+            if self.total_number_of_days > count:
+                self.write({
+                    'employee_present_days': count, 'non_present_days': self.total_number_of_days - count,
+                    'employee_final_present_days': count,
+                    'employee_loptotal_days': self.non_present_days - self.total_balance_days})
+                print('---------------LOP 2 -------------------', self.non_present_days - self.total_balance_days, self.employee_final_present_days)
+            # else:
+            #     raise ValidationError(_("The employee Present Days Must be smaller than Total Number of Days"))
             if self.employee_present_days > 0:
+                if self.employee_present_days > self.number_working_of_days:
+                    raise Warning(
+                        _("Alert!,The Employee Present day (%s) must be Equal or Smaller than Number of Working Days "
+                          "(%s).") % (
+                            self.employee_present_days, self.number_working_of_days))
                 for works in self.worked_days_line_ids:
                     if works.code == 'WORK100':
                         works.write({
@@ -309,10 +552,19 @@ class HrPayslip(models.Model):
                         works.write({
                             'number_of_days': self.number_working_of_days})
                 self.write({'amount_net_total': present_amount})
-
+                self.employee_final_present_days = (
+                        self.employee_present_days + self.total_balance_days + self.leave_paid_timeoff)
+                print('------------------efgh---------------------', self.employee_final_present_days)
                 for netsalary in self.line_ids:
-                    if netsalary.category_id.name != 'Deduction' and netsalary.category_id.name != 'Company Contribution':
-                        self.employee_final_present_days = self.leave_paid_timeoff + self.employee_present_days + self.number_of_leave
+                    if netsalary.category_id.name != 'Deduction' and \
+                            netsalary.category_id.name != 'Company Contribution':
+                        if not self.user_id:
+                            self.employee_final_present_days = self.leave_paid_timeoff + \
+                                                               self.employee_present_days + \
+                                                               self.number_of_leave
+                        else:
+                            self.employee_final_present_days = self.manual_attendance
+                        print('!!!!!!!!!!!!!!!!!', self.employee_final_present_days)
                         try:
                             profitpercent = (netsalary.amount / self.total_days_of_month)
                             profitpercentage = profitpercent * self.employee_final_present_days
@@ -323,8 +575,33 @@ class HrPayslip(models.Model):
                             'amount': profitpercentage})
             else:
                 raise ValidationError(
-                    _("Alert!,The selected Employee of %s, Doesn't have Attendence.SO, Payslip can't genrerate it.") % (
+                    _("Alert!,The selected Employee of Mr.Mrs.%s, Doesn't have Attendance.SO, Payslip can't generate "
+                      "it.") % (
                         self.employee_id.name))
+
+    def employee_birthday_amount(self):
+        birthday = self.employee_id.birthday
+        from datetime import datetime
+        currentMonth = datetime.now().month
+        birthday_month = birthday.month
+        if currentMonth == birthday_month:
+            for bday in self.line_ids:
+                if bday.name == 'Birthday Allowance':
+                    bday.write({
+                        'amount': self.bday_allowance})
+
+    def flight_allowance(self):
+        from datetime import datetime
+        anniversary = self.employee_id.date_of_joining
+        currentDay = datetime.now().day
+        currentMonth = datetime.now().month
+        import datetime
+        datem = datetime.datetime.strptime(str(anniversary), "%Y-%m-%d")
+        if datem.month == currentMonth:
+            for flight in self.line_ids:
+                if flight.name == 'Flight Allowance':
+                    flight.write({
+                        'amount': self.flt_allowance})
 
     def advance_salary(self):
         advance_salary_amount = self.env['salary.advance'].search([('employee_id', '=', self.employee_id.id)])
@@ -347,12 +624,11 @@ class HrPayslip(models.Model):
     def loan_deduct(self):
         loan_amount_deduction = self.env['hr.loan'].search([('employee_id', '=', self.employee_id.id)])
         employee_contract = self.env['hr.contract'].search([('employee_id', '=', self.employee_id.id)])
-        # print("loan deduction", loan_amount_deduction)
         total_paid_amount = 0.00
         balance_amount = 0.00
         for loan in loan_amount_deduction.loan_lines:
             loan_payment_date = loan.date
-            # print("loan payment date", loan_payment_date)
+
             from datetime import datetime
             currentMonth = datetime.now().month
             import datetime
@@ -380,10 +656,12 @@ class HrPayslip(models.Model):
                             'balance_amount': abs(balance_amount)})
 
     def _payslip_calculation(self):
+        print('**********************222**************', self.employee_loptotal_days)
         # self.employee_balance_days = self.total_days_of_month - (
         #         self.employee_final_present_days + self.employee_loptotal_days + self.number_of_leave)
-        self.employee_balance_days = self.total_days_of_month - (
-                self.employee_final_present_days + self.employee_loptotal_days)
+        # self.employee_balance_days = self.total_days_of_month - (
+        #         self.employee_final_present_days + self.employee_loptotal_days)
+        self.employee_balance_days = self.number_working_of_days - self.employee_present_days
         allowance = 0.00
         deduction = 0.00
         flight = 0.00
@@ -445,7 +723,8 @@ class HrPayslip(models.Model):
                         'amount': up})
                 if line.category_id.name == 'Net':
                     if deduction > 0:
-                        net = (allowance + basic) - (deduction)
+                        net = (allowance + basic)
+                        # net = (allowance + basic) - deduction
                         line.write({
                             'amount': net})
                     else:
@@ -460,7 +739,7 @@ class HrPayslip(models.Model):
         final_basic_amount = 0.00
         hra_amount = 0.00
         final_hra_amount = 0.00
-        if self.loan_deduction == True:
+        if self.loan_deduction:
             for loan in self.line_ids:
                 if loan.name == 'Gross':
                     total_gross = loan.amount * (1 - (self.gross_deduction_amount or 0.0) / 100.0)
@@ -576,7 +855,6 @@ class HrPayslip(models.Model):
                                     rec.employee_id.name, employee_contract_valdiate.start_date_doj, rec.date_from,
                                     rec.date_to))
 
-
     def payslip_employee_contract_validate_to_generate(self):
         for rec in self:
             if rec.employee_id:
@@ -586,8 +864,8 @@ class HrPayslip(models.Model):
                     raise ValidationError(_("Alert!, Payslip cannot generate for the Employee of Mr.%s, \n"
                                             "The Contract Salary Allocation is Not Matching with CTC - %s. "
                                             "and The Payment Difference is %s.") % (
-                                          rec.employee_id.name, employee_contract_valdiate.ctc,
-                                          employee_contract_valdiate.amount_settlment_diff))
+                                              rec.employee_id.name, employee_contract_valdiate.ctc,
+                                              employee_contract_valdiate.amount_settlment_diff))
 
     def unlink(self):
         if any(self.filtered(lambda payslip: payslip.state not in ('draft', 'cancel'))):
@@ -630,11 +908,14 @@ class HrPayslip(models.Model):
             payslip.current_employee_attendance()
             payslip._payslip_calculation()
             # payslip.payslip_validation_error()
+            payslip.employee_attendance_leave()
             payslip.employee_contract_validate_to_generate()
             payslip.payslip_employee_contract_validate_to_generate()
             payslip.get_employee_details()
-            # payslip.employee_birthday_amount()
-            # payslip.flight_allowance()
+            payslip.contract_amount_subtraction()
+            payslip.employee_birthday_amount()
+            payslip.get_public_leave_yesterday()
+            payslip.flight_allowance()
             payslip.loan_payment()
             payslip.loan_deduct()
             payslip.advance_salary()

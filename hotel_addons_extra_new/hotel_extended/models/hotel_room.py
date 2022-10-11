@@ -16,14 +16,12 @@ except (ImportError, IOError) as err:
 
 
 class HotelRoom(models.Model):
-
     _inherit = "hotel.room"
     _description = "Hotel Room"
 
     room_reservation_line_ids = fields.One2many(
         "hotel.room.reservation.line", "room_id", string="Room Reserve Line"
     )
-
 
     def unlink(self):
         """
@@ -89,7 +87,6 @@ class HotelRoom(models.Model):
 
 
 class RoomReservationSummary(models.Model):
-
     _name = "room.reservation.summary"
     _description = "Room reservation summary"
 
@@ -102,7 +99,7 @@ class RoomReservationSummary(models.Model):
     room_categ_id = fields.Many2many(
         "hotel.floor", string="Floor Category", ondelete="restrict"
     )
-    room_category= fields.Many2many("hotel.room.type",string="Room Category")
+    room_category = fields.Many2many("hotel.room.type", string="Room Category")
 
     summary_header = fields.Text("Summary Header")
     room_summary = fields.Text("Room Summary")
@@ -123,11 +120,19 @@ class RoomReservationSummary(models.Model):
             "target": "new",
         }
 
-    @api.onchange("date_from", "date_to","room_categ_id","room_category","room_summary")  # noqa C901 (function is too complex)
+    def button_room_summary_refresh(self):
+        self.get_room_summary()
+        self.date_to += timedelta(minutes=1)
+
+    @api.onchange("date_from", "date_to", "room_categ_id", "room_category",
+                  "room_summary")
+    @api.depends("date_from", "date_to", "room_categ_id", "room_category",
+                  "room_summary")  # noqa C901 (function is too complex)
     def get_room_summary(self):  # noqa C901 (function is too complex)
         """
         @param self: object pointer
         """
+        print('============SUCCESS++++++++')
         res = {}
         all_detail = []
         room_obj = self.env["hotel.room"]
@@ -157,15 +162,16 @@ class RoomReservationSummary(models.Model):
             while temp_date <= d_to_obj:
                 val = ""
                 val = (
-                    str(temp_date.strftime("%a"))
-                    + " "
-                    + str(temp_date.strftime("%b"))
-                    + " "
-                    + str(temp_date.strftime("%d"))
+                        str(temp_date.strftime("%a"))
+                        + " "
+                        + str(temp_date.strftime("%b"))
+                        + " "
+                        + str(temp_date.strftime("%d"))
                 )
                 summary_header_list.append(val)
-                date_range_list.append(temp_date.strftime(dt))
                 temp_date = temp_date + timedelta(days=1)
+                date_range_list.append(temp_date.strftime(dt))
+
             all_detail.append(summary_header_list)
             domain = []
 
@@ -180,7 +186,7 @@ class RoomReservationSummary(models.Model):
                 for room in room_ids:
                     room_detail = {}
                     room_list_stats = []
-                    room_detail.update({"floor": room.floor_id.name or "","name": room.name or ""})
+                    room_detail.update({"floor": room.floor_id.name or "", "name": room.name or ""})
                     if not room.room_reservation_line_ids and not room.room_line_ids:
                         for chk_date in date_range_list:
                             room_list_stats.append(
@@ -472,6 +478,9 @@ class RoomReservationSummary(models.Model):
 
                     room_detail.update({"value": room_list_stats})
                     all_room_detail.append(room_detail)
+                    for i in room_list_stats:
+                        if i['state'] == 'Free':
+                            print(i)
             main_header.append({"header": summary_header_list})
             self.summary_header = str(main_header)
             self.room_summary = str(all_room_detail)
@@ -485,5 +494,3 @@ class RoomReservationSummary(models.Model):
             name = rec.name
             result.append((rec.room_categ_id.id, name))
         return result
-
-

@@ -21,5 +21,5 @@ class AddProofType(models.Model):
     _description = 'Guest Proof Register'
 
     proof_type = fields.Many2one("identity.register", string="Proof Type")
-    proof_img=fields.Binary(string="Proof")
+    proof_img =fields.Binary(string="Proof")
 

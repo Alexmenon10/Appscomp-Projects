@@ -1,57 +1,118 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-<!--        <record id="project_task_inherited_form" model="ir.ui.view">-->
-<!--            <field name="name">project.task.inherited.form</field>-->
-<!--            <field name="model">project.task</field>-->
-<!--            <field name="inherit_id" ref="project.view_task_form2"/>-->
-<!--            <field name="arch" type="xml">-->
-<!--                <button name="action_assign_to_me" position='after'>-->
-<!--                    <button name="task_complete_request_to_approve"-->
-<!--                            string="Request To Approve"-->
-<!--                            type="object"-->
-<!--                            attrs="{'invisible': [('request_to_approve', '!=', False),'|',-->
-<!--                            ('stage_name', '=', 'In Progress'),-->
-<!--                            ]}"/>-->
-<!--                    <button name="task_complete_approved"-->
-<!--                            string="Approved"-->
-<!--                            type="object"-->
-<!--                            attrs="{'invisible': ['|','|',-->
-<!--                            ('request_to_approve', '!=', True),-->
-<!--                            ('request_approved', '=', True),-->
-<!--                            ('request_rejected', '=', True)]}"/>-->
-<!--                    <button name="task_complete_reject"-->
-<!--                            string="Rejected"-->
-<!--                            type="object"-->
-<!--                            attrs="{'invisible': ['|','|',-->
-<!--                            ('request_to_approve', '!=', True),-->
-<!--                            ('request_approved', '=', True),-->
-<!--                            ('request_rejected', '=', True)]}"/>-->
-<!--                </button>-->
-<!--&lt;!&ndash;                <button name="action_view_so" position="attributes">&ndash;&gt;-->
-<!--&lt;!&ndash;                    <attribute name="string">Service Engagement</attribute>&ndash;&gt;-->
-<!--&lt;!&ndash;                </button>&ndash;&gt;-->
-<!--                <xpath expr="//field[@name='stage_id']" position="attributes">-->
-<!--                    <attribute name="clickable">0</attribute>-->
+        <record id="project_task_inherited_form" model="ir.ui.view">
+            <field name="name">project.task.inherited.form</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_form2"/>
+            <field name="arch" type="xml">
+                <button name="action_assign_to_me" position='after'>
+                    <button name="task_complete_request_to_approve"
+                            string="Request To Approve"
+                            type="object"
+                            attrs="{'invisible': ['|', ('request_to_approve', '!=', False),
+                            ('extend_hours_approve_check', '!=', False)]}"/>
+                    <button name="task_complete_approved"
+                            string="Approved"
+                            type="object"
+                            attrs="{'invisible': ['|','|',
+                            ('request_to_approve', '!=', True),
+                            ('request_approved', '=', True),
+                            ('request_rejected', '=', True)]}"/>
+                    <button name="task_complete_reject"
+                            string="Rejected"
+                            type="object"
+                            attrs="{'invisible': ['|','|',
+                            ('request_to_approve', '!=', True),
+                            ('request_approved', '=', True),
+                            ('request_rejected', '=', True)]}"/>
+                    <button name="request_to_time_extended"
+                            string="Request To Time Extended"
+                            type="object"
+                            attrs="{'invisible': ['|', ('time_extended_request_to_approve', '!=', False),
+                            ('extend_hours_approve_check', '!=', True)]}"/>
+                    <button name="approved_time_extended"
+                            string="Time Extention Approved"
+                            type="object"
+                            attrs="{'invisible': ['|','|',
+                            ('time_extended_request_to_approve', '!=', True),
+                            ('time_extended_request_approved', '=', True),
+                            ('time_extended_request_rejected', '=', True)]}"/>
+                    <button name="rejected_time_extended"
+                            string="Reject To Time Extended"
+                            type="object"
+                            attrs="{'invisible': ['|','|',
+                            ('time_extended_request_to_approve', '!=', True),
+                            ('time_extended_request_approved', '=', True),
+                            ('time_extended_request_rejected', '=', True)]}"/>
+                </button>
+                <!--                <button name="action_view_so" position="attributes">-->
+                <!--                    <attribute name="string">Service Engagement</attribute>-->
+                <!--                </button>-->
+                <xpath expr="//field[@name='stage_id']" position="attributes">
+                    <attribute name="clickable">0</attribute>
+                </xpath>
+                <xpath expr="//field[@name='start_date']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='end_date']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='planned_hours']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <field name="partner_id" position="after">
+                    <field name="request_to_approve" invisible="0"/>
+                    <field name="request_approved" invisible="0"/>
+                    <field name="request_rejected" invisible="0"/>
+                    <field name="time_extended_request_to_approve" invisible="0"/>
+                    <field name="time_extended_request_approved" invisible="0"/>
+                    <field name="time_extended_request_rejected" invisible="0"/>
+                    <field name="stage_name" invisible="1"/>
+                    <field name="priority" widget="priority"/>
+                    <field name="approved_extend_hours"
+                           attrs="{'invisible': [('time_extended_request_to_approve', '=', False)],
+                           'required': [('time_extended_request_to_approve', '!=', False)]}"/>
+                </field>
+                <xpath expr="//div[@name='button_box']" position="after">
+                    <widget name="web_ribbon" title="Waiting For Approve" bg_color="bg-warning"
+                            attrs="{'invisible': [('request_to_approve', '!=', True)]}"/>
+                    <widget name="web_ribbon" title="Approved" bg_color="bg-success"
+                            attrs="{'invisible': [('request_approved', '=', False)]}"/>
+                    <widget name="web_ribbon" title="Rejected" bg_color="bg-danger"
+                            attrs="{'invisible': [('request_rejected', '=', False)]}"/>
+                    <widget name="web_ribbon" title="Waiting For Time Extended" bg_color="bg-warning"
+                            attrs="{'invisible': [('time_extended_request_to_approve', '!=', True)]}"/>
+                    <widget name="web_ribbon" title="Time Extended Approved" bg_color="bg-success"
+                            attrs="{'invisible': [('time_extended_request_approved', '=', False)]}"/>
+                    <widget name="web_ribbon" title="Time Extened Rejected" bg_color="bg-danger"
+                            attrs="{'invisible': [('time_extended_request_rejected', '=', False)]}"/>
+                </xpath>
+                <xpath expr="//field[@name='planned_hours']" position="after">
+                    <field name="task_attachment" filename="attachment_name" widget="image" style="height:100px;width:100px;"/>
+                    <field name="attachment_name" invisible="1"/>
+                </xpath>
+                <xpath expr="//field[@name='remaining_hours']" position="after">
+                    <field name="extend_hours" widget="timesheet_uom" sum="Extended Hours"
+                           attrs="{'invisible': [('extend_hours_check', '!=', True)]}"/>
+                    <field name="extend_hours_check"/>
+                    <field name="extend_hours_approve_check"/>
+                </xpath>
+<!--                <xpath expr="//field[@name='user_ids']" position="replace">-->
+<!--                    <field name="user_ids"-->
+<!--                                class="o_task_user_field"-->
+<!--                                options="{'no_open': True}"-->
+<!--                                widget="many2many_avatar_user"-->
+<!--                                domain="[('share', '=', False), ('active', '=', True)]"/>-->
 <!--                </xpath>-->
-<!--                <field name="partner_id" position="after">-->
-<!--                    <field name="request_to_approve" invisible="0"/>-->
-<!--                    <field name="request_approved" invisible="0"/>-->
-<!--                    <field name="request_rejected" invisible="0"/>-->
-<!--                    <field name="stage_name" invisible="1"/>-->
-<!--                    <field name="priority" widget="priority"/>-->
-<!--&lt;!&ndash;                    <field name="user_ids" widget="many2many_avatar_user"/>&ndash;&gt;-->
-<!--                </field>-->
-<!--                <xpath expr="//div[@name='button_box']" position="after">-->
-<!--                    <widget name="web_ribbon" title="Waiting For Approve" bg_color="bg-warning"-->
-<!--                            attrs="{'invisible': [('request_to_approve', '!=', True)]}"/>-->
-<!--                    <widget name="web_ribbon" title="Approved" bg_color="bg-success"-->
-<!--                            attrs="{'invisible': [('request_approved', '=', False)]}"/>-->
-<!--                    <widget name="web_ribbon" title="Rejected" bg_color="bg-danger"-->
-<!--                            attrs="{'invisible': [('request_rejected', '=', False)]}"/>-->
-<!--                </xpath>-->
-<!--            </field>-->
-<!--        </record>-->
+
+                <xpath expr="//field[@name='timesheet_ids']" position="attributes">
+                    <attribute name="attrs">
+                     {'readonly':[('extend_hours_approve_check','=',True)]}
+                  </attribute>
+                </xpath>
+            </field>
+        </record>
 
         <record id="my_import_wizard_form" model="ir.ui.view">
             <field name="name">my.import.wizard.form</field>
@@ -62,13 +123,11 @@
                         <field name="data_file" nolabel="1" filename="file_name"/>
                         <field name="file_name" invisible="1"/>
                     </group>
-
                     <footer>
                         <button name="import_csv" type="object"
                                 string="Import" class="oe_highlight"/>
                         <button special="cancel" string="Cancel"/>
                     </footer>
-
                 </form>
             </field>
         </record>
@@ -80,10 +139,25 @@
             <field name="target">new</field>
         </record>
 
-    <!--        <menuitem id="import_wizard_menu"-->
-    <!--                  parent="hr_attendance.menu_hr_attendance_manage_attendances"-->
-    <!--                  action="my_import_wizard_action"-->
-    <!--                  sequence="15"/>-->
+        <record id="project_project_view2_form_inherited" model="ir.ui.view">
+            <field name="name">project.project.view.form.inherited</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="priority">24</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='date_start']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='date']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <!--        <menuitem id="import_wizard_menu"-->
+        <!--                  parent="hr_attendance.menu_hr_attendance_manage_attendances"-->
+        <!--                  action="my_import_wizard_action"-->
+        <!--                  sequence="15"/>-->
 
         <!--        <template xml:space="preserve">-->
         <!--            <t t-extend="ListView.buttons">-->

@@ -136,6 +136,11 @@ class HotelReservation(models.Model):
     advance_payment = fields.Float(string="Advance")
     proof_type = fields.Binary(string='Proof')
 
+    reservation_hrs_selection = fields.Selection([
+        ('short', 'Short Close'),
+        ('12', '12 Hours'),
+        ('24', '24 Hours'),
+    ])
 
     @api.depends('checkin', 'checkout')
     @api.onchange('checkin', 'checkout')
@@ -201,7 +206,6 @@ class HotelReservation(models.Model):
         ctx.update({"duplicate": True})
         return super(HotelReservation, self.with_context(ctx)).copy()
 
-
     # @api.constrains("reservation_line", "adults", "children")
     def _check_reservation_rooms(self):
         """
@@ -259,6 +263,7 @@ class HotelReservation(models.Model):
     @api.depends('partner_id')
     @api.onchange('partner_id')
     def get_reservation_num(self):
+        print('--------------------------')
         if self.reservation_no:
             for val in self.reservation_line:
                 room_code = val.reserve.room_no
@@ -282,6 +287,7 @@ class HotelReservation(models.Model):
         vals["reservation_no"] = (
                 self.env["ir.sequence"].next_by_code("hotel.reservation") or "New"
         )
+
         return super(HotelReservation, self).create(vals)
 
     def check_overlap(self, date1, date2):
@@ -295,7 +301,6 @@ class HotelReservation(models.Model):
         @param self: The object pointer
         @return: new record set for hotel room reservation line.
         """
-        print('************************SUccess***************************')
         self._check_reservation_rooms()
         reservation_line_obj = self.env["hotel.room.reservation.line"]
         vals = {}
@@ -552,7 +557,6 @@ class HotelReservation(models.Model):
         else:
             action = {"type": "ir.actions.act_window_close"}
         return action
-
 
 
 #

@@ -193,14 +193,26 @@
                                 <field name="leave_paid_timeoff" readonly="1" force_save="1"/>
                                 <field name="employee_balance_days" invisible="0" readonly="1" force_save="1"/>
                                 <field name="employee_final_present_days" force_save="1" readonly="1"/>
+                                <label for="manual_attendance"/>
+                                <div class="o_row no-gutters d-flex" name="manual_ctc">
+                                    <field name="manual_attendance" class="oe_inline" nolabel="1"/>
+                                    <button name="get_manual_attendance" type="object" string="Update"/>
+                                </div>
+                                <field name="user_id" attrs="{'invisible':[('update_check','!=',True)]}"/>
+                                <field name="update_date" attrs="{'invisible':[('update_check','!=',True)]}"/>
+                                <field name="update_check" invisible="1"/>
                             </group>
                             <group string="Working Days Info">
-                                <field name="employee_loptotal_days" invisible="0" readonly="1" force_save="1"/>
+                                <field name="employee_loptotal_days" invisible="1" readonly="1" force_save="1"/>
                                 <field name="employee_final_lop_total_days" invisible="0" readonly="1" force_save="1"/>
                                 <field name="employee_one_day_salary" readonly="1" force_save="1" invisible="0"/>
                                 <field name="unpaid_deduction" readonly="1" force_save="1" invisible="0"/>
                                 <field name="number_working_of_days" readonly="1" force_save="1"/>
                                 <field name="total_days_of_month" readonly="1" force_save="1"/>
+                                <field name="third_friday_date" invisible="0" readonly="1" force_save="1"/>
+                                <field name="firday_boolean" invisible="1" readonly="1" force_save="1"/>
+                                <field name="public_lop_count_days" invisible="0" readonly="1" force_save="1"/>
+
                             </group>
                         </group>
                         <notebook>

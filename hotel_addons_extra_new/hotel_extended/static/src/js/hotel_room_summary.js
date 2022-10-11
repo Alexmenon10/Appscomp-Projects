@@ -65,8 +65,13 @@ odoo.define("hotel_extended.hotel_room_summary", function (require) {
             var month_1 = month.toString();
 
             const myArray = d1.split(" ");
+            var day_day=day.length;
+            if (day_day == 1){
+                var full_date = year + "-0" + month_1 + "-0" + day + " " + myArray[4]
+            }else{
+                var full_date = year + "-0" + month_1  +"-"+ day + " " + myArray[4]
+            }
 
-            var full_date = year + "-0" + month_1 + "-0" + day + " " + myArray[4]
 
             this.$el.find(".table_free").bind("click", function () {
                 if ($(this).attr("date") < full_date){
@@ -84,6 +89,7 @@ odoo.define("hotel_extended.hotel_room_summary", function (require) {
                             room_id: $(this).attr("data"),
                             date: $(this).attr("date"),
                             default_adults: 1,
+                            active:true,
                         },
                     });
                 }
@@ -91,6 +97,7 @@ odoo.define("hotel_extended.hotel_room_summary", function (require) {
             });
             this.$el.find(".table_reserved").bind("click", function () {
                 var res_id = $(this).data("id");
+                console.log("====================",$(this).data("id"))
                 self.do_action({
                     type: "ir.actions.act_window",
                     res_model: "hotel.reservation",
@@ -109,7 +116,6 @@ odoo.define("hotel_extended.hotel_room_summary", function (require) {
             );
         },
         _onFieldChanged: function (event) {
-        console.log('Js csalledd My widgetttttttt>>>>>141414>>>>')
             this._super();
             this.lastChangeEvent = event;
             this.set({

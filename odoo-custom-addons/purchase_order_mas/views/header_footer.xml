@@ -16,12 +16,12 @@
                                 <div class="text-center col-4" style="font-size:14px;">
                                     <t t-if="doc.state in ('draft', 'sent','cancel')">
                                         <span style="color:#f7412c;">
-                                            <span t-esc="'NOT APPROVED'"/>
+                                            <strong style="font-size:16px;"><span t-esc="'NOT APPROVED'"/></strong>
                                         </span>
                                     </t>
                                     <t t-if="doc.state in ('purchase','done')">
-                                        <span style="color:#f7412c;">
-                                            <span t-esc="'APPROVED'"/>
+                                        <span style="color:green;">
+                                            <strong style="font-size:16px;"><span t-esc="'APPROVED'"/></strong>
                                         </span>
                                     </t>
                                 </div>

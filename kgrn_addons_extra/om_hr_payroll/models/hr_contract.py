@@ -49,6 +49,8 @@ class HrContract(models.Model):
     pf_deduction = fields.Float(string="PF Deductions")
     pf_deduction_second = fields.Float(string="PF Deductions")
     basic_allowance = fields.Float(string="Basic Allowance")
+    bday_allowance = fields.Float(string="Birthday Allowance", compute='employee_birthday_amount')
+    flt_allowance = fields.Float(string="Flight Allowance", compute='flight_allowance')
     tds = fields.Float(string='TDS')
     professional_tax = fields.Float(string='Professional Tax')
     # esi = fields.Float(string='ESI', compute='_esi_calculation')
@@ -77,6 +79,41 @@ class HrContract(models.Model):
     approved_by = fields.Many2one('res.users', compute='_get_current_user', string='Current User')
     salary_hike_enabled = fields.Boolean(string='Salary Hike?')
     start_date_doj = fields.Date(string="Start Date",related='employee_id.date_of_joining')
+
+
+
+    @api.depends('employee_id')
+    def employee_birthday_amount(self):
+        if self.employee_id and self.bday_allowance == 0:
+            birthday = self.employee_id.birthday
+            from datetime import datetime
+            currentMonth = datetime.now().month
+            currentyear = datetime.now().year
+            # year_completion = self.employee_id.Employee_one_year_completion.year
+            if birthday:
+                birthday_month = birthday.month
+                # if year_completion >= currentMonth:
+                if currentMonth == birthday_month:
+                    bday = 500
+                    self.bday_allowance = bday
+            else:
+                bday = 0
+                self.bday_allowance = bday
+
+    @api.onchange('employee_id')
+    def flight_allowance(self):
+        from datetime import datetime
+        anniversary = self.employee_id.date_of_joining
+        currentDay = datetime.now().day
+        currentMonth = datetime.now().month
+        # year_completion = self.employee_id.Employee_one_year_completion.month
+        import datetime
+        # datem = datetime.datetime.strptime(str(anniversary), "%Y-%m-%d")
+        if self.employee_id and self.flt_allowance == 0:
+            fligth = anniversary.month
+            if fligth == currentMonth:
+                flight = 700
+                self.flt_allowance = flight
 
 
     def _get_current_user(self):

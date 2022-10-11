@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.ui.view" id="project_details_timesheet_wizard_view">
+            <field name="name">project.details.wizard</field>
+            <field name="model">project.details.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Project">
+                    <group colspan="2" string="Filter Project Report">
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                        <group>
+                            <field name="user_id"/>
+                            <field name="stage_id" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="print_report_fun" string="Print Report"
+                                type="object" default_focus="1" class="oe_highlight" icon="fa-print"/>
+                        <button string="Cancel" class="btn-default" special="cancel" icon="fa-times"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_wizard_timesheet_task_report" model="ir.actions.act_window">
+            <field name="name">Project Stage Report</field>
+            <field name="res_model">project.details.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+          <menuitem
+                name="Project Timesheet Report"
+                action="action_wizard_timesheet_task_report"
+                id="menu_view_project_timesheet_report_wizard"
+                parent="project.menu_project_report"
+                sequence="53"/>
+
+    </data>
+</odoo>

@@ -402,10 +402,10 @@ class VehicleGatePass(models.Model):
 
     @api.model
     def create(self, values):
-        if values['pass_check'] == False:
+        if not values['pass_check']:
             values['name'] = self.sudo().env['ir.sequence'].get('vehicle.gate.pass') or '/'
             res = super(VehicleGatePass, self).create(values)
-        if values['pass_check'] == True:
+        if values['pass_check']:
             values['name'] = self.sudo().env['ir.sequence'].get('vehicle.gate.in.pass') or '/'
             res = super(VehicleGatePass, self).create(values)
         return res

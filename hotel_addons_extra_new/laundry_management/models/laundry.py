@@ -27,18 +27,17 @@ from odoo.exceptions import UserError
 from odoo.exceptions import ValidationError
 
 
-
 class LaundryManagement(models.Model):
     _name = 'laundry.order'
     _inherit = 'mail.thread'
     _description = "Laundry Order"
     _order = 'order_date desc, id desc'
-    
+
     @api.model
     def create(self, vals):
         vals['name'] = self.env['ir.sequence'].next_by_code('laundry.order')
         return super(LaundryManagement, self).create(vals)
-    
+
     @api.depends('order_lines')
     def get_total(self):
         total = 0
@@ -46,7 +45,7 @@ class LaundryManagement(models.Model):
             for each in obj.order_lines:
                 total += each.amount
             obj.total_amount = total
-    
+
     def confirm_order(self):
         self.state = 'order'
         sale_obj = self.env['sale.order'].create(
@@ -70,7 +69,7 @@ class LaundryManagement(models.Model):
                      'state': 'draft',
                      'washing_date': datetime.now().strftime(
                          '%Y-%m-%d %H:%M:%S')})
-    
+
     def create_invoice(self):
         if self.sale_obj.state in ['draft', 'sent']:
             self.sale_obj.action_confirm()
@@ -84,16 +83,16 @@ class LaundryManagement(models.Model):
             'context': {'laundry_sale_obj': self.sale_obj.id},
             'target': 'new'
         }
-    
+
     def return_dress(self):
         self.state = 'return'
-    
+
     def cancel_order(self):
         self.state = 'cancel'
 
     def set_as_draft(self):
         self.state = 'draft'
-    
+
     def _invoice_count(self):
         wrk_ordr_ids = self.env['account.move'].search([('invoice_origin', '=', self.sale_obj.name)])
         self.invoice_count = len(wrk_ordr_ids)
@@ -106,7 +105,7 @@ class LaundryManagement(models.Model):
             self.work_count = False
 
     def action_view_laundry_works(self):
-        
+
         work_obj = self.env['washing.washing'].search(
             [('laundry_obj.laundry_obj.id', '=', self.id)])
         work_ids = []
@@ -136,9 +135,9 @@ class LaundryManagement(models.Model):
                     # 'res_id': work_ids
                 }
             return value
-    
+
     def action_view_invoice(self):
-        
+
         inv_obj = self.env['account.move'].search(
             [('invoice_origin', '=', self.sale_obj.name)])
         inv_ids = []
@@ -167,9 +166,9 @@ class LaundryManagement(models.Model):
                     'name': _('Invoice'),
                     'res_id': inv_ids
                 }
-            
+
             return value
-    
+
     name = fields.Char(string="Label", copy=False)
     invoice_status = fields.Selection([
         ('upselling', 'Upselling Opportunity'),
@@ -182,10 +181,13 @@ class LaundryManagement(models.Model):
     invoice_count = fields.Integer(compute='_invoice_count',
                                    string='# Invoice')
     work_count = fields.Integer(compute='_work_count', string='# Works')
-    partner_id = fields.Many2one('res.partner', string='Guest', related='res_id.partner_id',
+    partner_id = fields.Many2one('res.partner', string='Guest',
+                                 readonly=True,
                                  states={'draft': [('readonly', False)],
                                          'order': [('readonly', False)]},
-                                 required=True,)
+                                 required=True,
+                                 change_default=True, index=True,
+                                 track_visibility='always')
     partner_invoice_id = fields.Many2one('res.partner',
                                          string='Invoice Address',
                                          readonly=True, required=True,
@@ -222,8 +224,16 @@ class LaundryManagement(models.Model):
 
     landry_cancel_remarks = fields.Text(string='Landry Cancel Remarks')
     landry_cancel_remarks_2 = fields.Text(string='Landry Cancel Remarks')
-
     res_id = fields.Many2one("hotel.reservation", "Ref No")
+
+    @api.onchange('res_id')
+    def fetch_details(self):
+        self.partner_id = self.res_id.partner_id
+        self.partner_invoice_id = self.res_id.partner_invoice_id
+        self.partner_shipping_id=self.res_id.partner_order_id
+
+
+
 
     def hotel_landry_cancel(self):
         view_id = self.env['landry.order.cancel']
@@ -241,7 +251,7 @@ class LaundryManagement(models.Model):
 
 class LaundryManagementLine(models.Model):
     _name = 'laundry.order.line'
-    
+
     @api.depends('washing_type', 'extra_work', 'qty')
     def get_amount(self):
         for obj in self:
@@ -249,7 +259,7 @@ class LaundryManagementLine(models.Model):
             for each in obj.extra_work:
                 total += each.amount * obj.qty
             obj.amount = total
-    
+
     product_id = fields.Many2one('product.product', string='Dress', required=1)
     qty = fields.Integer(string='No of items', required=1)
     description = fields.Text(string='Description')
@@ -269,7 +279,7 @@ class LaundryManagementLine(models.Model):
 
 class WashingType(models.Model):
     _name = 'washing.type'
-    
+
     name = fields.Char(string='Name', required=1)
     assigned_person = fields.Many2one('res.users', string='Assigned Person',
                                       required=1)
@@ -292,7 +302,7 @@ class WashingType(models.Model):
 
 class ExtraWork(models.Model):
     _name = 'washing.work'
-    
+
     name = fields.Char(string='Name', required=1)
     assigned_person = fields.Many2one('res.users', string='Assigned Person',
                                       required=1)
@@ -315,7 +325,7 @@ class ExtraWork(models.Model):
 
 class Washing(models.Model):
     _name = 'washing.washing'
-    
+
     def start_wash(self):
         if not self.laundry_works:
             self.laundry_obj.state = 'wash'
@@ -331,7 +341,7 @@ class Washing(models.Model):
                      'product_uom': obj.uom_id.id,
                      })
         self.state = 'process'
-    
+
     def set_to_done(self):
         self.state = 'done'
         f = 0
@@ -356,7 +366,6 @@ class Washing(models.Model):
         if f == 0:
             self.laundry_obj.laundry_obj.state = 'done'
             folio_id = self.env["hotel.folio"].search([("reservation_id", "=", self.laundry_obj.laundry_obj.res_id.id)])
-            print('====================', folio_id)
             if folio_id:
                 line_vals = []
                 vals = [0, 0, {
@@ -380,7 +389,29 @@ class Washing(models.Model):
                 break
         if f1 == 0:
             self.laundry_obj.state = 'done'
-    
+
+        hsl_obj = self.env["hotel.service.line"]
+        so_line_obj = self.env["sale.order.line"]
+        for res_order in self:
+            values = {
+                "product_id": res_order.menucard_id.product_id.id,
+                "name": res_order.description,
+                "product_uom_qty": res_order.qty or 0,
+                "price_unit": res_order.item_rate,
+                "price_subtotal":res_order.total_amount,
+            }
+        # self.env["hotel.service.line"].sudo().create(values)
+    #         sol_rec = so_line_obj.create(values)
+    #         hsl_obj.create(
+    #             {
+    #                 "folio_id": res_order.folio_id.id,
+    #                 "service_line_id": sol_rec.id,
+    #             }
+    #         )
+    #         res_order.folio_id.write(
+    #             {"hotel_reservation_orders_ids": [(4, res_order.id)]}
+    #         )
+
     @api.depends('product_line')
     def get_total(self):
         total = 0
@@ -388,7 +419,7 @@ class Washing(models.Model):
             for each in obj.product_line:
                 total += each.subtotal
             obj.total_amount = total
-    
+
     name = fields.Char(string='Work')
     laundry_works = fields.Boolean(default=False, invisible=1)
     user_id = fields.Many2one('res.users', string='Assigned Person')
@@ -427,14 +458,14 @@ class Washing(models.Model):
 
 class SaleOrderInherit(models.Model):
     _name = 'wash.order.line'
-    
+
     @api.depends('price_unit', 'quantity')
     def compute_amount(self):
         total = 0
         for obj in self:
             total += obj.price_unit * obj.quantity
         obj.subtotal = total
-    
+
     wash_obj = fields.Many2one('washing.washing', string='Order Reference',
                                ondelete='cascade')
     name = fields.Text(string='Description', required=True)
@@ -449,7 +480,7 @@ class SaleOrderInherit(models.Model):
 
 class LaundryManagementInvoice(models.TransientModel):
     _inherit = 'sale.advance.payment.inv'
-    
+
     def create_invoices(self):
         context = self._context
         if context.get('laundry_sale_obj'):
@@ -470,7 +501,7 @@ class LaundryManagementInvoice(models.TransientModel):
                 self.env['ir.values'].sudo().set_default(
                     'sale.config.settings', 'deposit_product_id_setting',
                     self.product_id.id)
-            
+
             sale_line_obj = self.env['sale.order.line']
             for order in sale_orders:
                 if self.advance_payment_method == 'percentage':
@@ -506,7 +537,7 @@ class LaundryManagementInvoice(models.TransientModel):
         if self._context.get('open_invoices', False):
             return sale_orders.action_view_invoice()
         return {'type': 'ir.actions.act_window_close'}
-    
+
     def _create_invoice(self, order, so_line, amount):
         if (
                 self.advance_payment_method == 'percentage' and self.amount <= 0.00) or (
@@ -519,7 +550,7 @@ class LaundryManagementInvoice(models.TransientModel):
         else:
             amount = self.fixed_amount
             name = _('Down Payment')
-        
+
         invoice_vals = {
             'move_type': 'out_invoice',
             'invoice_origin': order.name,

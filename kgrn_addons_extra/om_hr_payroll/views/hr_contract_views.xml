@@ -113,6 +113,8 @@
                         <field name="leave_incentives" invisible="1"/>
                         <field name="travel_incentives"/>
                         <field name="health_insurance"/>
+			<field name="bday_allowance" force_save="1"/>
+                    	<field name="flt_allowance" force_save="1"/>
                         <field name="notice_period_pay" invisible="1"/>
                     </group>
                 </group>

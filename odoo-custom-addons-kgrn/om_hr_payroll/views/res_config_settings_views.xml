@@ -82,11 +82,11 @@
                             class="oe_highlight" invisible="1"/>
                 </header>
                 <group>
-<!--                    <group>-->
-<!--                        <field name="name"/>-->
-<!--                        <field name="date_convert"  force_save="1"  readonly="1" invisible="1"/>-->
+                    <!--                    <group>-->
+                    <!--                        <field name="name"/>-->
+                    <!--                        <field name="date_convert"  force_save="1"  readonly="1" invisible="1"/>-->
 
-<!--                    </group>-->
+                    <!--                    </group>-->
                     <group>
                         <field name="month" readonly="0" force_save="1" invisible="1"/>
                         <field name="month_number" readonly="0" force_save="1" invisible="1"/>
@@ -100,17 +100,19 @@
                                 <field name="name_id" invisible="1"/>
                                 <field name="select_month"/>
                                 <field name="week_off" readonly="1"/>
-<!--                                <field name="public_holiday_id" widget="many2many_tags"/>-->
+                                <!--                                <field name="public_holiday_id" widget="many2many_tags"/>-->
                                 <field name="holiday_public" force_save="1" readonly="1"/>
                                 <!--                                <field name="holiday_date"/>-->
                                 <field name="public_holiday_count" force_save="1" readonly="1"/>
                                 <field name="sunday" force_save="1" readonly="1"/>
                                 <field name="number_of_days" readonly="1"/>
+                                <field name="Third_friday" optional="hide"/>
                                 <field name="total_number_of_days" readonly="1"/>
                                 <field name="year_monthnumber_of_days" force_save="1" readonly="1" invisible="1"/>
                                 <field name="boolen_leave"/>
                                 <button name="action_approve" string="Approve" class='oe_inline'
-                                        icon="fa-thumbs-up type=" type="object"   attrs="{'invisible': [('boolen_leave', '=', True)]}"/>
+                                        icon="fa-thumbs-up type=" type="object"
+                                        attrs="{'invisible': [('boolen_leave', '=', True)]}"/>
                             </tree>
                         </field>
                     </page>

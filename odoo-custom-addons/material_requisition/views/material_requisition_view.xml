@@ -434,8 +434,6 @@
         <menuitem id="main_menu_service_bill" web_icon="material_requisition,static/description/images5.jpeg"
                   name="Material Requisition" sequence="70"/>
         <menuitem id="menu_material_requisition" name="Material Requisition" parent="main_menu_service_bill"/>
-        <!-- 		<menuitem id="menu_material_requisition" name="Material Requisition"  -->
-        <!-- 				  parent="stock.menu_stock_root" sequence="5"/> -->
         <menuitem action="action_material_requisition_indent" name="Material Requisition"
                   parent="menu_material_requisition" id="menu_indent_indent" sequence="1"/>
 

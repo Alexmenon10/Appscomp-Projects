@@ -37,22 +37,13 @@
                     </t>
 
                     <t t-call="purchase_order_mas.external_layout_standard_mass">
-                        <style>
-                            .table td {
-                            font-family:calibri !important;
-                            border-top:none !important;
-                            }
-
-                        </style>
                         <table class="table fnt"
-                               style="border:1px solid #143980;border-top:1px solid white;width:100%;padding-top:70px; margin-bottom:0;border-color:#143980;height:225mm;">
+                               style="width:100%;margin-bottom:0;height:225mm;">
                             <thead>
-                                <tr>
-                                </tr>
                                 <td>
-                                    <tr style="height:3px !important;">
+                                    <tr>
                                         <td colspan="6"
-                                            style="padding:1px;border:1px solid #143980;font-size:12px;height:33.33% !important;display:table-cell;padding-left: 6px;">
+                                            style="border:1px solid #143980;font-size:12px;height:33.33% !important;display:table-cell;padding-left: 6px;">
                                             <strong style="color:#143980;">Supplier Address</strong>
                                             <br/>
                                             <strong>
@@ -179,7 +170,7 @@
                                 </tr>
                             </thead>
 
-                            <tbody style="width:100%;border:1px solid #143980;border-bottom:none !important;font-size:12px;">
+                            <tbody style="width:100%;border:1px solid #143980;font-size:12px;">
                                 <!-- Variables declaration start -->
                                 <t t-set="i" t-value="1"/>
                                 <t t-set="disc" t-value="0"/>
@@ -195,87 +186,88 @@
                                             <t t-set="tot_amt" t-value="tot_amt + line.price_subtotal"/>
                                         </t>
                                     </t>
-                                    <tr style="height:1px;">
+                                    <tr style="height:1px;border-right:1px solid black !important;">
                                         <td class="text-center"
-                                            style="width:1%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                            style="width:1%;color:black;border-left:1px solid #143980;border-bottom:none !important;">
                                             <span t-esc="i"/>
                                             <t t-set="i" t-value="i+1"/>
                                         </td>
                                         <t t-if="ddd != 0">
                                             <td colspan="2" class="text-left"
-                                                style="width:35%;color:black;border-left:1px solid #143980; border-bottom:none !important;border:1px solid #143980;">
+                                                style="width:35%;color:black;border-left:1px solid #143980; border-bottom:none !important;">
                                                 <span t-esc="consolines['description']"/>
                                             </td>
                                         </t>
                                         <t t-else="">
                                             <td colspan="3" class="text-left"
-                                                style="width:35%;color:black;border-left:1px solid #143980; border-bottom:none !important;border:1px solid #143980;">
+                                                style="width:35%;color:black;border-left:1px solid #143980; border-bottom:none !important;;">
                                                 <span t-esc="consolines['description']"/>
                                             </td>
                                         </t>
                                         <td class="text-center"
-                                            style="width:8%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                            style="width:8%;color:black;border-left:1px solid #143980;border-bottom:none !important;">
                                             <span t-esc="consolines['hsncode']"/>
                                         </td>
                                         <td class="text-center"
-                                            style="width:10%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                            style="width:10%;color:black;border-left:1px solid #143980;border-bottom:none !important;">
                                             <span t-esc="(consolines['taxids'])"/>
                                         </td>
-                                        <td style="width:10%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                        <td style="width:10%;color:black;border-left:1px solid #143980;border-bottom:none !important;">
                                             <span t-esc="(consolines['prodqty'])"/>
                                         </td>
-                                        <td style="width:10%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                        <td style="width:10%;color:black;border-left:1px solid #143980;border-bottom:none !important;">
                                             <span t-esc="(line.product_uom.name)"/>
                                         </td>
                                         <td class="text-right"
-                                            style="width:5%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                            style="width:5%;color:black;border-left:1px solid #143980;border-bottom:none !important;">
                                             <span t-esc="'%.2f'%(consolines['price'])"/>
                                         </td>
 
                                         <t t-if="ddd != 0">
                                             <t t-if="consolines['disc']">
                                                 <td class="text-center"
-                                                    style="width:5%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                                    style="width:5%;color:black;border-left:1px solid #143980;border-bottom:none !important;">
                                                     <span t-esc="'{0}'.format(int(consolines['disc']))"/>
                                                 </td>
                                             </t>
                                             <t t-else="">
                                                 <td class="text-center"
-                                                    style="width:5%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                                    style="width:5%;color:black;border-left:1px solid #143980;border-bottom:none !important;">
                                                     <span t-esc="'0'"/>
                                                 </td>
                                             </t>
                                         </t>
 
                                         <td class="text-right"
-                                            style="width:10%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                            style="width:10%;border-left:1px solid #143980;color:black;border-bottom:none !important;">
                                             <span t-esc="'%.2f'%(consolines['taxprice'])"/>
                                         </td>
                                         <td class="text-right"
-                                            style="width:10%;color:black;border-left:1px solid #143980;border-bottom:none !important;border:1px solid #143980;">
+                                            style="width:10%;color:black;border-left:1px solid #143980;border-right:1px solid #143980;border-bottom:none !important;">
                                             <span t-esc="'%.2f'%(tot_amt)"/>
                                         </td>
                                     </tr>
                                 </t>
                                 <tr>
-                                    <td style="border-left:1px solid #143980;border-top: none !important;"></td>
+                                    <td style="border-left:1px solid #143980;border-top: none !important;"/>
                                     <t t-if="ddd != 0">
                                         <td colspan="2"
-                                            style="border-left:1px solid #143980;border-top: none !important;"></td>
+                                            style="border-left:1px solid #143980;border-top: none !important;"/>
                                     </t>
                                     <t t-else="">
                                         <td colspan="3"
-                                            style="border-left:1px solid #143980;border-top: none !important;"></td>
+                                            style="border-left:1px solid #143980;border-top: none !important;"/>
                                     </t>
-                                    <td style="border-left:1px solid #143980;border-top: none !important;"></td>
-                                    <td style="border-left:1px solid #143980;border-top: none !important;"></td>
-                                    <td style="border-left:1px solid #143980;border-top: none !important;"></td>
-                                    <td style="border-left:1px solid #143980;border-top: none !important;"></td>
-                                    <td style="border-left:1px solid #143980;border-top: none !important;"></td>
-                                    <td style="border-left:1px solid #143980;border-top: none !important;border-right: 1px solid;"></td>
+                                    <td style="border-left:1px solid #143980;border-top: none !important;"/>
+                                    <td style="border-left:1px solid #143980;border-top: none !important;"/>
+                                    <td style="border-left:1px solid #143980;border-top: none !important;"/>
+                                    <td style="border-left:1px solid #143980;border-top: none !important;"/>
+                                    <td style="border-left:1px solid #143980;border-top: none !important;border-right: 1px solid;"/>
                                     <t t-if="ddd != 0">
-                                        <td style="border-left:1px solid #143980;border-top: none !important;border-right: 1px solid;"></td>
+                                        <td style="border-left:1px solid #143980;border-top: none !important;border-right: 1px solid;"/>
                                     </t>
+                                    <td style="border-left:1px solid #143980;border-top: none !important;border-right: 1px solid;"/>
+                                    <td style="border-left:1px solid #143980;border-top: none !important;border-right: 1px solid;"/>
                                 </tr>
                             </tbody>
                             <tbody style="width:100%;border:1px solid #143980;font-size:12px;">

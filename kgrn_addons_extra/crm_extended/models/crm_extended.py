@@ -1,6 +1,7 @@
 from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
 from odoo import models, fields, api, _
+from odoo.exceptions import UserError, ValidationError
 
 import time
 
@@ -8,7 +9,9 @@ import time
 class Lead(models.Model):
     _inherit = "crm.lead"
 
-    estimate_date = fields.Datetime(string='Estimated Date')
+    date_deadline = fields.Date(string='Estimated Date (Closed Date)')
+
+    # close_date = fields.Date(string='Closed Date')
 
     def get_comercial_head_recepients(self):
         cc = ''
@@ -54,6 +57,54 @@ class SaleOrder(models.Model):
     mail_to_team = fields.Boolean(string='Mail to Team')
     remainder_date = fields.Date(string='Remainder Date')
     remainder_datetime = fields.Datetime(string='Remainder Date')
+    next_invoice_date = fields.Date(string='Next Invoice Date')
+    next_invoice_date_num = fields.Integer(string='Days')
+    invoice_terms_id = fields.Many2one('invoice.terms', string='Invoice Terms')
+    payment_id = fields.Many2one('account.payment', string='Payment Id')
+    advance_amount = fields.Float(string='Advance')
+    journal_id = fields.Many2one('account.journal', string='Journal', domain="[('type', '=', journal_type)]")
+    journal_type = fields.Selection([
+        ('bank', 'Bank'),
+        ('cash', 'Cash')], string="Journal Type")
+
+    @api.onchange('next_invoice_date_num')
+    def onchange_duration(self):
+        if self.date_order:
+            my_str = str(self.date_order.date())  # 👉️ (mm-dd-yyyy)
+            date_1 = datetime.strptime(my_str, '%Y-%m-%d')
+            result_1 = date_1 + timedelta(days=self.next_invoice_date_num)
+            self.write({
+                'next_invoice_date': result_1,
+            })
+
+    # @api.onchange('journal_type')
+    # def onchange_journal_type(self):
+    #     journal = self.env['account.journal'].search([('type', '=', self.journal_type)])
+    #     self.write({
+    #         'journal_id': journal.id,
+    #     })
+
+    def get_advance_payment(self):
+        hotel_advance_pay = self.env["account.payment"]
+        for value in self:
+            if self.advance_amount > 0.00:
+                rec = hotel_advance_pay.create(
+                    {
+                        "partner_id": value.partner_id.id,
+                        "amount": value.advance_amount,
+                        "journal_id": value.journal_id.id,
+                        "service_id": value.id,
+                    }
+                )
+            else:
+                raise UserError(_('Please add some items to move.'))
+            journal = self.env['account.payment'].search([
+                ('partner_id', '=', value.partner_id.id), ('amount', '=', value.advance_amount),
+            ])
+            journal.action_post()
+            self.write({
+                'payment_id': journal.id,
+            })
 
     def cron_service_proposal_reminder(self):
         service_proposal = self.env['sale.order'].sudo().search([('state', 'in', ['draft', 'sent'])])
@@ -85,12 +136,12 @@ class SaleOrder(models.Model):
             difff = dt22 - dt21
             if datetime_in > cur_date:
                 if difff <= datetime_check:
-                    template = self.env.ref('crm_extended.service_proposal_followup_mai',
+                    template = self.env.ref('crm_extended.service_proposal_followup_mailllll',
                                             False)
                     template.with_context(ctx).sudo().send_mail(self.id, force_send=True)
             elif datetime_in < cur_date:
                 if abs(difff) == datetime_after:
-                    template = self.env.ref('crm_extended.service_proposal_alert_mai',
+                    template = self.env.ref('crm_extended.service_proposal_alert_mailll',
                                             False)
                     template.with_context(ctx).sudo().send_mail(self.id, force_send=True)
 
@@ -104,6 +155,7 @@ class SaleOrder(models.Model):
         cc = cc.rstrip(',')
         return cc
 
+    # @api.onchange('remainder_date')
     def get_record_ids(self):
         service_proposal = self.env['sale.order'].sudo().search([('state', '=', 'sale')])
         records = []
@@ -129,7 +181,7 @@ class SaleOrder(models.Model):
             'company_email': self.company_id.email,
             'company_phone': self.company_id.phone,
         })
-        template = self.env.ref('crm_extended.mlmlmadmmlml', False)
+        template = self.env.ref('crm_extended.aassasa', False)
         template.with_context(ctx).sudo().send_mail(self.id, force_send=True)
 
     def get_service_team_members(self):
@@ -146,8 +198,8 @@ class SaleOrder(models.Model):
         ctx.update({
             'url': current_url,
         })
-        template = self.env.ref('crm_extended.service_engagemnet_confirmation_maiiii', False)
-        template.send_mail(self.id, force_send=True)
+        template = self.env.ref('crm_extended.service_engagemnet_confirmation_maiiissieitlwii', False)
+        template.with_context(ctx).sudo().send_mail(self.id, force_send=True)
         return super(SaleOrder, self).action_confirm()
 
 
@@ -163,3 +215,15 @@ class CrmLeadLost(models.TransientModel):
     _inherit = 'crm.lead.lost'
 
     future_follow_date = fields.Datetime(string='Future Follow Date')
+
+
+class InvoiceTerms(models.Model):
+    _name = "invoice.terms"
+
+    name = fields.Char(string='Invoice Terms')
+
+
+class AccountPayment(models.Model):
+    _inherit = "account.payment"
+
+    service_id = fields.Many2one('sale.order', string='Service Order')

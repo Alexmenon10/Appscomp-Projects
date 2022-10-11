@@ -227,10 +227,10 @@ class FourWheelerUsageReport(models.TransientModel):
                                 holiday_hour = datetime_in - datetime_out
                                 if holiday_hour < ot_datetime_check_one:
                                     holiday_amount = department_config.holiday_ot_amount_one
-                                elif ot_datetime_check_one < holiday_hour and ot_datetime_check_two > holiday_hour:
+                                elif ot_datetime_check_one < holiday_hour < ot_datetime_check_two:
                                     holiday_amount = department_config.holiday_ot_amount_two
-                                elif ot_datetime_check_two + timedelta(hours=3,
-                                                                       minutes=00) > holiday_hour and holiday_hour > ot_datetime_check_two:
+                                elif ot_datetime_check_two + timedelta(hours=3,minutes=00) > holiday_hour > \
+                                        ot_datetime_check_two:
                                     holiday_amount = department_config.holiday_ot_amount_three
                             else:
                                 if work_out_hour:

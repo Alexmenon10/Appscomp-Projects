@@ -1,9 +1,11 @@
 # See LICENSE file for full copyright and licensing details.
-from odoo import _, fields, models, api
+
+from odoo import _, fields, models
 from odoo.exceptions import ValidationError
 
 
 class HotelHousekeeping(models.Model):
+
     _name = "hotel.housekeeping"
     _description = "Hotel Housekeeping"
     _rec_name = "room_id"
@@ -79,19 +81,9 @@ class HotelHousekeeping(models.Model):
         default="inspect",
     )
 
-    res_id = fields.Many2one("hotel.reservation", "Ref No")
-
     housekeeping_cancel_remarks = fields.Text(string='Housekeeping Cancel Remarks')
     housekeeping_cancel_remarks_2 = fields.Text(string='Housekeeping Cancel Remarks')
     housekeeping_cancel_remarks_3 = fields.Text(string='Housekeeping Cancel Remarks')
-
-    @api.onchange("res_id")
-    def _onchange_of_res_id(self):
-        for room in self.res_id.reservation_line:
-            print('---------------------------------------------', room.name)
-            self.write({
-                'room_id': room.id,
-            })
 
     def house_keeping_cancel(self):
         view_id = self.env['housekeeping.cancel']
@@ -134,22 +126,6 @@ class HotelHousekeeping(models.Model):
         """
         if not self.quality:
             raise ValidationError(_("Alert!, Please update quality of work!"))
-        folio_id = self.env["hotel.folio"].search([("reservation_id", "=", self.res_id.id)])
-        if folio_id:
-            line_vals = []
-            vals = [0, 0, {
-                "current_date": self.current_date,
-                "clean_type": self.clean_type,
-                "room_id": self.room_id.id,
-                "inspector_id": self.inspector_id.id,
-                "inspect_date_time": self.inspect_date_time,
-            }]
-            line_vals.append(vals)
-        else:
-            raise ValidationError(_("Alert!, Please Create a Folio against the Reservation"))
-        folio_id.update({
-            'hotel_house_keeping_orders_ids': line_vals,
-        })
         self.write({"state": "done"})
 
     def room_inspect(self):

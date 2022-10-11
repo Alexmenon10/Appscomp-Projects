@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.ui.view" id="project_task_pending_details_wizard_view">
+            <field name="name">project.task.pending.details</field>
+            <field name="model">project.task.pending.details</field>
+            <field name="arch" type="xml">
+                <form string="Project">
+                    <group colspan="2" string="Filter Project Report">
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                        <group>
+                            <field name="user_id"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="print_report_pending" string="Print Report"
+                                type="object" default_focus="1" class="oe_highlight" icon="fa-print"/>
+                        <button string="Cancel" class="btn-default" special="cancel" icon="fa-times"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+         <record id="action_wizard_task_pending" model="ir.actions.act_window">
+            <field name="name">Task Pending Report</field>
+            <field name="res_model">project.task.pending.details</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+
+          <menuitem
+                name="Task Pending Report"
+                action="action_wizard_task_pending"
+                id="menu_view_pending_wizard"
+                parent="project.menu_project_report"
+                sequence="54"/>
+
+    </data>
+</odoo>

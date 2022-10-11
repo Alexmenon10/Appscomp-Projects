@@ -198,19 +198,16 @@ class HrPayrollyear(models.Model):
             for record in self.day_and_month:
                 convert_select_month = datetime(1, int(record.select_month), 1).strftime("%B")
                 if line.date_months == convert_select_month:
-                    print('month Check **********************************************',line.date_months, convert_select_month)
+                    print('month Check **********************************************', line.date_months,
+                          convert_select_month)
                     line.write({
                         'number_working_of_days': record.number_of_days,
                         'number_of_leave': record.public_holiday_count + record.sunday,
                         'total_days_of_month': record.total_number_of_days,
+                        # 'third_friday_date': record.day_and_month.Third_friday
 
                     })
-                #     print('Number OF Working Days ******************' , record.number_of_days)
-                # if record.number_of_days ==0:
-                #     raise ValidationError(
-                #         _("Alert!,The selected Payslip Period - %s, Doesn't have Number Working Days Setup."
-                #           "SO, Config and payroll year and check it.") % (
-                #             record.date_months))
+
 
 
 class Monthyear(models.Model):
@@ -244,6 +241,7 @@ class Monthyear(models.Model):
     holiday_public = fields.Char(string='Leave Type')
     total_number_of_days = fields.Float(string='Total Number Of Days')
     year_monthnumber_of_days = fields.Float(string='year month Number Of Days')
+    Third_friday = fields.Date(string='Third Friday')
 
     def action_approve(self):
         from datetime import datetime
@@ -280,8 +278,6 @@ class Monthyear(models.Model):
                             raise ValidationError(
                                 _('Alert !, The Selected Month and Year of - %s-%s is already exists.') % (
                                     convert_select_month_vali, record.name_id.name))
-
-
 
     # @api.constrains('select_month')
     # def _check_select_month(self):

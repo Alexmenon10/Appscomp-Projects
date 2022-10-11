@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="project_report_wizards_action" model="ir.actions.report">
+        <field name="name">Project Wizard Report</field>
+        <field name="model">project.project</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">timesheets_by_employee.project_report_timesheets_qweb</field>
+        <field name="report_file">timesheets_by_employee.project_report_timesheets_qweb</field>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="project_report_timesheets_qweb">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <br/>
+                <br/>
+                <div class="row">
+                    <div class="col-4" align="left">
+                        <strong>
+                            <span t-field="res_company.partner_id.name"/>
+                        </strong>
+                        <br/>
+                        <span t-field="res_company.partner_id.street"/>
+                        <span t-field="res_company.partner_id.street2"/>,
+                        <br/>
+                        <span t-field="res_company.partner_id.city"/>
+                        <span t-field="res_company.partner_id.state_id.name"/>
+                        <span t-field="res_company.partner_id.country_id.name"/>
+                        <br/>
+                        <span t-field="res_company.partner_id.phone"/>
+                    </div>
+                    <div class="col-8" align="right">
+                        <img src='/web/binary/company_logo' class="img-fluid img-thumbnail"
+                             style=" max-width:20%;"/>
+                    </div>
+                </div>
+                <div class="page">
+                    <div class="oe_structure"/>
+                    <br/>
+                    <br/>
+                    <div style="color:#66b3ff; width: 100%">
+                        <strong>
+                            <h2 class="text-center">
+                                <div>
+                                    <strong>Project Report</strong>
+                                </div>
+                            </h2>
+                        </strong>
+                    </div>
+                    <br/>
+                    <br/>
+                    <div class="row mt32 mb32">
+                        <div class="col-auto mw-500 mb-3" style="width : 25%">
+                            <strong>Assigned To</strong>
+                            <p class="text-center;m-0" t-esc="user_name"/>
+                        </div>
+                        <div class="col-auto mw-100 mb-3" style="width : 25%">
+                            <strong>Start Date</strong>
+                            <p class="m-0" t-esc="start_date"/>
+                        </div>
+                        <div class="col-auto mw-100 mb-3" style="width : 25%">
+                            <strong>End Date</strong>
+                            <p class="m-0" t-esc="end_date"/>
+                        </div>
+                    </div>
+                    <br/>
+                    <br/>
+                    <div class="row">
+                        <table class="table table-condensed table-bordered" style="width: 100%">
+                            <thead class="col-sm-6" style="background-color:lavenderblush;">
+                                <th class="text-center" style="width: 8%">Task Name</th>
+                                <th class="text-center" style="width: 8%">Project Name</th>
+                                <th class="text-center" style="width: 8%">Assigned To</th>
+                                <th class="text-center" style="width: 8%">Assigning Date</th>
+                                <th class="text-center" style="width: 8%">Deadline</th>
+                                <th class="text-center" style="width: 8%">Planned Hours</th>
+                                <th class="text-center" style="width: 8%">Spent Hours</th>
+                                <th class="text-center" style="width: 8%">Remaining Hours</th>
+                                <th class="text-center" style="width: 8%">Stage</th>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="docs" t-as="d">
+                                    <tr>
+                                        <t>
+                                            <t t-if="d['name']">
+                                                <td>
+                                                    <span t-esc="d['name']"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+
+                                        <t>
+                                            <t t-if="d['project']">
+                                                <td class="text-center">
+                                                    <span t-esc="d['project']"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+                                        <t>
+                                            <t t-if="d['user_id']">
+                                                <td class="text-center">
+                                                    <span t-esc="d['user_id']"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+                                        <t>
+                                            <t t-if="d['date_assign']">
+                                                <td class="text-center">
+                                                    <span t-esc="d['date_assign']"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+                                        <t>
+                                            <t t-if="d['date_deadline']">
+                                                <td class="text-center">
+                                                    <span t-esc="d['date_deadline']"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+                                        <t>
+                                            <t t-if="d['planned_hours']">
+                                                <td>
+                                                    <span t-esc="d['planned_hours']"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+                                        <t>
+                                            <t t-if="d['total_hours_spent']">
+                                                <td>
+                                                    <span t-esc="d['total_hours_spent']"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+                                        <t>
+                                            <t t-if="d['remaining_hours']">
+                                                <td class="text-center">
+                                                    <span t-esc="abs(d['remaining_hours'])"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+                                           <t>
+                                            <t t-if="d['stages']">
+                                                <td class="text-center">
+                                                    <span t-esc="d['stages']"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td class="text-center">
+                                                    <span>-</span>
+                                                </td>
+                                            </t>
+                                        </t>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="footer" align="right" style="margin-top: 10px;">
+                    <div class="col-xs-6 text-center" align="center">
+                        Page
+                        <span class="page"/>
+                        of
+                        <span class="topage"/>
+                        <span>&amp;nbsp;</span>
+                        <span>&amp;nbsp;</span>
+                        Print Date
+                        &amp;nbsp;
+                        <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y')"/>
+                        <span>&amp;nbsp;</span>
+                        Print Time
+                        &amp;nbsp;
+                        <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%H:%M:%S')"/>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
