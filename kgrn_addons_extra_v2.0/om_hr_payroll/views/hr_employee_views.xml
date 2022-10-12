@@ -70,7 +70,7 @@
             <field name="first_contract_date" position="replace">
                 <field name="date_of_joining" readonly="1"/>
             </field>
-         <!--   <xpath expr="//field[@name='work_email']" position="after">
+            <xpath expr="//field[@name='work_email']" position="after">
                 <label for="hour"></label>
                 <div class="o_row" name="hour">
                     <field name="hour" force_save="1" placeholder="Hour"/>
@@ -90,7 +90,7 @@
                     <field name="check_out_second" force_save="1" placeholder="Sec"/>
                     <span>Hours</span>
                 </div>
-            </xpath>-->
+            </xpath>
             <field name="company_id" position="attributes">
                 <attribute name="readonly">1</attribute>
             </field>
