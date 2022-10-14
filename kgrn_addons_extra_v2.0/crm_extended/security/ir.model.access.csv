@@ -7,3 +7,4 @@ access_import_attendance,import.attendance,model_import_attendance,,1,1,1,1
 access_wizard_partner_statement,wizard.partner.statement,model_wizard_partner_statement,,1,1,1,1
 access_excess_time_spend_task,excess.time.spend.task,model_excess_time_spend_task,,1,1,1,1
 access_invoice_terms,invoice.terms,model_invoice_terms,,1,1,1,1
+access_service_engagement_survey,service.engagement.survey,model_service_engagement_survey,,1,1,1,1

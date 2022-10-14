@@ -45,21 +45,7 @@ class Task(models.Model):
     time_extended_request_to_approve = fields.Boolean(string='Waiting For Time Extended')
     time_extended_request_approved = fields.Boolean(string='Time Extended Approve')
     time_extended_request_rejected = fields.Boolean(string='Time Extended Rejected')
-    # user_ids = fields.Many2one('res.users', relation='project_task_user_rel', column1='task_id', column2='user_id',
-    #                            string='Assignees', default=lambda self: not self.env.user.share and self.env.user,
-    #                            context={'active_test': False}, tracking=True)
-
-    # user_ids = fields.Many2many(
-    #     'res.users',
-    #     string='Assignees',
-    #     tracking=True
-    # )
-    # state = fields.Selection([('draft', 'New'),
-    #                           ('confirm', 'Confirmed'),
-    #                           ('approved', 'Approved'),
-    #                           ('reject', 'Rejected'),
-    #                           ('cancel', 'Cancelled')],
-    #                          string='State', default='draft')
+    real_planned_hours = fields.Float(string='Real Planned Hours')
 
     @api.onchange('stage_id')
     @api.depends('stage_id')
@@ -68,52 +54,73 @@ class Task(models.Model):
             raise ValidationError(_('Alert.....'))
         self.stage_name = self.stage_id.name
 
-    @api.onchange('start_date', 'end_date')
-    def _onchange_date_validation(self):
-        if self.start_date and self.end_date:
-            task_s_date = self.start_date.date()
-            task_e_date = self.end_date.date()
-            timedelta = self.end_date - self.start_date
-            tot_sec = timedelta.total_seconds()
-            h = tot_sec // 3600
-            m = (tot_sec % 3600) // 60
-            duration_hour = ("%d.%d" % (h, m))
-            self.planned_hours = float(duration_hour)
-            # if self.start_date > self.end_date:
-            #     raise ValidationError(_('Alert, You Cannot Select this Date.'))
-            # if not self.project_id.date_start <= task_s_date <= self.project_id.date:
-            #     raise ValidationError(_('Alert, You Cannot Select this Date.'))
-            # if not self.project_id.date_start <= task_e_date <= self.project_id.date:
-            #     raise ValidationError(_('Alert, You Cannot Select this Date.'))
+    # @api.onchange('start_date', 'end_date')
+    # def _onchange_date_validation(self):
+    #     if self.start_date and self.end_date:
+    #         task_s_date = self.start_date.date()
+    #         task_e_date = self.end_date.date()
+    #         timedelta = self.end_date - self.start_date
+    #         tot_sec = timedelta.total_seconds()
+    #         h = tot_sec // 3600
+    #         m = (tot_sec % 3600) // 60
+    #         duration_hour = ("%d.%d" % (h, m))
+    #         self.planned_hours = float(duration_hour)
+    # if self.start_date > self.end_date:
+    #     raise ValidationError(_('Alert, You Cannot Select this Date.'))
+    # if not self.project_id.date_start <= task_s_date <= self.project_id.date:
+    #     raise ValidationError(_('Alert, You Cannot Select this Date.'))
+    # if not self.project_id.date_start <= task_e_date <= self.project_id.date:
+    #     raise ValidationError(_('Alert, You Cannot Select this Date.'))
+
+    # @api.onchange('timesheet_ids')
+    # def extended_time_warning(self):
+    #     total = 0.00
+    #     for line in self.timesheet_ids:
+    #         if line.unit_amount:
+    #             total += line.unit_amount
+    #             if total > self.
+    #             print('================================', total)
 
     @api.onchange('effective_hours')
     def planned_hours_extence(self):
-        if self.planned_hours < self.effective_hours:
-            value = (20 / self.planned_hours) * 100
+        value = (20 / 100) * self.planned_hours
+        extend_hour_2 = self.planned_hours + value
+        if self.real_planned_hours > 0.00:
+            if self.planned_hours == self.effective_hours:
+                self.write({
+                    'extend_hours_approve_check': True,
+                })
+        if self.planned_hours == self.effective_hours:
             self.write({
                 'extend_hours': value,
                 'extend_hours_check': True,
             })
-            extend_hour_2 = self.planned_hours + value
-            if extend_hour_2 < self.effective_hours:
-                print('================================', value, extend_hour_2)
+        if self.extend_hours_check:
+            if extend_hour_2 == self.effective_hours:
                 self.write({
                     'extend_hours_approve_check': True,
                 })
+            if extend_hour_2 < self.effective_hours:
+                raise ValidationError("++++")
+        else:
+            if self.planned_hours < self.effective_hours:
+                raise ValidationError("=====")
 
     def request_to_time_extended(self):
-        print('=-')
         self.write({
             'time_extended_request_to_approve': True,
         })
 
     def approved_time_extended(self):
-        print('----')
         if self.approved_extend_hours == 0.00:
             raise ValidationError(_('Alert, Extened Hours.'))
+        self.real_planned_hours = self.planned_hours
+        self.planned_hours += self.approved_extend_hours
+        self.planned_hours += self.extend_hours
         self.write({
             'time_extended_request_approved': True,
             'extend_hours_approve_check': False,
+            'extend_hours_check': False,
         })
 
     def rejected_time_extended(self):
@@ -163,6 +170,8 @@ class Task(models.Model):
     #     }
 
     def task_complete_request_to_approve(self):
+        if self.planned_hours != self.effective_hours:
+            raise ValidationError("=====")
         ctx = self.env.context.copy()
         current_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         current_url += '/web#id=%d&view_type=form&model=%s' % (self.id, self._name)

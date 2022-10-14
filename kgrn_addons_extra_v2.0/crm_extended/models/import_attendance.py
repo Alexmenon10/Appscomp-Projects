@@ -270,4 +270,4 @@ class HrAttendance(models.Model):
                     _("Cannot create new attendance record for %(empl_name)s, the employee was Add to Bulk Attendance "
                       "List") % {
                         'empl_name': self.employee_id.name})
-            return super(HrAttendance, self)._check_validity()
+        return super(HrAttendance, self)._check_validity()

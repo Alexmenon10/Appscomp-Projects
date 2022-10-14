@@ -29,6 +29,8 @@
         'views/crm_extended_view.xml',
         'views/project_task_view.xml',
         'views/import_attendance_view.xml',
+        'views/survey_feedback.xml',
+        'views/mail_template_inherit.xml',
     ],
     'images': [],
     'license': 'LGPL-3',

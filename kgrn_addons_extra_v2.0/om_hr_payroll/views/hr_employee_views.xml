@@ -70,27 +70,27 @@
             <field name="first_contract_date" position="replace">
                 <field name="date_of_joining" readonly="1"/>
             </field>
-            <xpath expr="//field[@name='work_email']" position="after">
-                <label for="hour"></label>
-                <div class="o_row" name="hour">
-                    <field name="hour" force_save="1" placeholder="Hour"/>
-                    <span>:</span>
-                    <field name="minute" force_save="1" placeholder="Minute"/>
-                    <span>:</span>
-                    <field name="second" force_save="1" placeholder="Sec"/>
-                    <span>Hours</span>
-                </div>
+<!--            <xpath expr="//field[@name='work_email']" position="after">-->
+<!--                <label for="hour"></label>-->
+<!--                <div class="o_row" name="hour">-->
+<!--                    <field name="hour" force_save="1" placeholder="Hour"/>-->
+<!--                    <span>:</span>-->
+<!--                    <field name="minute" force_save="1" placeholder="Minute"/>-->
+<!--                    <span>:</span>-->
+<!--                    <field name="second" force_save="1" placeholder="Sec"/>-->
+<!--                    <span>Hours</span>-->
+<!--                </div>-->
 
-                <label for="check_out_hour"></label>
-                <div class="o_row" name="check_out_hour">
-                    <field name="check_out_hour" force_save="1" placeholder="Hour"/>
-                    <span>:</span>
-                    <field name="check_out_minute" force_save="1" placeholder="Minute"/>
-                    <span>:</span>
-                    <field name="check_out_second" force_save="1" placeholder="Sec"/>
-                    <span>Hours</span>
-                </div>
-            </xpath>
+<!--                <label for="check_out_hour"></label>-->
+<!--                <div class="o_row" name="check_out_hour">-->
+<!--                    <field name="check_out_hour" force_save="1" placeholder="Hour"/>-->
+<!--                    <span>:</span>-->
+<!--                    <field name="check_out_minute" force_save="1" placeholder="Minute"/>-->
+<!--                    <span>:</span>-->
+<!--                    <field name="check_out_second" force_save="1" placeholder="Sec"/>-->
+<!--                    <span>Hours</span>-->
+<!--                </div>-->
+<!--            </xpath>-->
             <field name="company_id" position="attributes">
                 <attribute name="readonly">1</attribute>
             </field>

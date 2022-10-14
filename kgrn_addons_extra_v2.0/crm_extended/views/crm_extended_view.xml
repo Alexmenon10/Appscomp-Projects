@@ -76,7 +76,7 @@
                 <button name="action_draft" position='after'>
                     <button name="get_advance_payment"
                             string="Advance Payment"
-                            type="object" attrs="{'invisible': [('payment_id', '!=', False)]}"/>
+                            type="object" attrs="{'invisible': [('state', '!=', 'sale')]}"/>
                     <button name="send_feedback_screen"
                             string="Send Feedback Link"
                             type="object" class="oe_highlight"
@@ -93,6 +93,9 @@
                 <xpath expr="//field[@name='partner_id']" position="after">
                     <field name="remainder_date" required="1"/>
                     <field name="remainder_datetime" required="0" invisible="1"/>
+                    <field name="feedback_id"/>
+                    <field name="survey_start_url" label="Public share URL" readonly="1" widget="CopyClipboardChar"
+                           class="mb16"/>
                 </xpath>
                 <xpath expr="//field[@name='team_id']" position="attributes">
                     <attribute name="string">Service Team</attribute>
@@ -111,10 +114,14 @@
                 </xpath>
                 <xpath expr="//field[@name='payment_term_id']" position="after">
                     <field name="invoice_terms_id" invisible="1"/>
-                    <field name="advance_amount"/>
-                    <field name="journal_type"/>
-                    <field name="journal_id" options='{"no_open": False, "no_create": True}'/>
-                    <field name="payment_id" readonly="1"/>
+                    <field name="advance_amount"
+                           attrs="{'invisible': [('state', '!=', 'sale')]}"/>
+                    <field name="journal_type"
+                           attrs="{'invisible': [('state', '!=', 'sale')]}"/>
+                    <field name="journal_id" options='{"no_open": False, "no_create": True}'
+                           attrs="{'invisible': [('state', '!=', 'sale')]}"/>
+                    <field name="payment_id" readonly="1"
+                           attrs="{'invisible': [('state', '!=', 'sale')]}"/>
                 </xpath>
             </field>
         </record>

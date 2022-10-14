@@ -1,6 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
+
+        <record id="customer_feed_back_form_sssuu" model="mail.template">
+            <field name="name">Service Proposal (Follow Up) - Send by Email</field>
+            <field name="model_id" ref="crm_extended.model_sale_order"/>
+            <field name="subject">Service Proposal (Follow Up) : {{object.name}}</field>
+            <field name="email_from">{{ (object.company_id.email) }}</field>
+            <field name="email_to">{{object.partner_id.email}}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html"><![CDATA[
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">
+                <tr><td valign="middle">
+                    <span style="font-size: 10px;">Your Service Engagement</span><br/>
+                    <span style="font-size: 20px; font-weight: bold;">
+                       <strong><t t-out="object.name or ''"></t></strong>
+                    </span>
+                </td><td valign="middle" align="right">
+                   <div style="width: 45%;float: top;">
+                        <img src='/web/binary/company_logo' style="width:30%"/>
+                    </div>
+                </td></tr>
+                <tr><td colspan="2" style="text-align:center;">
+                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>
+                </td></tr>
+            </table>
+                <p> Dear <strong><t t-out="object.partner_id.name or ''"></t></strong> Team,
+            <br/>
+            <br/>
+            We have supported the Service Engagement of "<strong><t t-out="object.name or ''"></t></strong>", and We have fulfilled your expectations.
+            Please share your experience through this feedback link and support us
+                <br/>
+                <br/>
+            Thank you!!
+                <br/>
+                LINK :  <t t-out="object.survey_start_url or ''"></t></strong>
+<!--                <p align="center">-->
+<!--                    <a target="_blank" href="{{object.survey_start_url}}" style="border-radius: 25px;padding:10px;color: #fefefe;background-color: #ea714b;border-style: solid;" class='oe_highlight'">-->
+<!--                        <b>View</b>-->
+<!--                    </a>-->
+<!--                </p>-->
+                <br/>
+                <br/>
+                <br/>
+            Regards,<br/>
+            <strong><t t-out="object.user_id.name or ''"></t></strong>
+            <br/>
+            <br/>
+            <br/>
+
+            <p align="center">----------------------------------This is a system generated email----------------------------------------------</p></p>
+
+                <tr align="center">
+                    <td align="center" style="min-width: 590px; padding: 0 8px 0 8px; font-size:11px;">
+                        <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin: 16px 0px 4px 0px;"/>
+                        <b><t t-out="object.company_id.name or ''"></t><b/>
+                        <div style="color: #999999;">
+                            <t t-out="object.company_id.phone or ''"></t> |
+                            <t t-out="object.company_id.email or ''"></t> |
+                            <t t-out="object.company_id.website or ''"></t>
+                        </div>
+                    </td>
+                </tr>
+            ]]>
+            </field>
+        </record>
+        <!--        <record id="mail_template_feedback_custosss" model="mail.template">-->
+        <!--            <field name="name">FeedBack From Customer</field>-->
+        <!--            <field name="model_id" ref="crm_extended.model_sale_order"/>-->
+        <!--            <field name="partner_to">{{object.id}}</field>-->
+        <!--            <field name="email_from">{{ (object.company_id.email) }}</field>-->
+        <!--            <field name="subject">FeedBack for {{ object.name }} Service Engagement.</field>-->
+<!--                    <field name="email_to">{{object.partner_id.email}}</field>-->
+        <!--            <field name="body_html" type="html"><![CDATA[-->
+        <!--            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: white; padding: 0; border-collapse:separate;">-->
+        <!--                <tr><td valign="middle">-->
+        <!--                    <span style="font-size: 10px;">Your Service Engagement</span><br/>-->
+        <!--                    <span style="font-size: 20px; font-weight: bold;">-->
+        <!--                       <strong><t t-out="object.name or ''"></t></strong>-->
+        <!--                    </span>-->
+        <!--                </td><td valign="middle" align="right">-->
+        <!--                   <div style="width: 45%;float: top;">-->
+        <!--                        <img src='/web/binary/company_logo' style="width:30%"/>-->
+        <!--                    </div>-->
+        <!--                </td></tr>-->
+        <!--                <tr><td colspan="2" style="text-align:center;">-->
+        <!--                  <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:4px 0px 32px 0px;"/>-->
+        <!--                </td></tr>-->
+        <!--            </table>-->
+        <!--                <p> Dear <strong><t t-out="object.team_id.name or ''"></t></strong> Team,-->
+        <!--            <br/>-->
+        <!--            <br/>-->
+        <!--            Service Engagement of <strong><t t-out="object.name or ''"></t></strong> amounting in <strong><t t-out="object.amount_total or ''"></t></strong> has confirmed, Thank you for your trust!.-->
+        <!--                <br/>-->
+        <!--                Do not hesitate to contact us if you have any questions.-->
+        <!--                <br/>-->
+        <!--                <br/>-->
+        <!--                <br/>-->
+        <!--            Regards,<br/>-->
+        <!--            <strong><t t-out="object.user_id.name or ''"></t></strong>-->
+        <!--            <br>-->
+        <!--            <br/>-->
+        <!--            <br/>-->
+        <!--            <p align="center">-->
+        <!--                <a target="_blank" href="${ctx.get('url')}" style="border-radius: 25px;padding:10px;color: #fefefe;background-color: #ea714b;border-style: solid;" class='oe_highlight'">-->
+        <!--                    <b>View Service Engagement</b>-->
+        <!--                </a>-->
+        <!--                <a t-att-href="access_link" t-att-data-oe-model="object._name" t-att-data-oe-id="object.id" style="background-color:#875A7B; padding: 10px; text-decoration: none; color: #fff; border-radius: 5px;">-->
+        <!--            View <t t-esc="model_description or 'document'"/>-->
+        <!--            </p>-->
+
+        <!--            <br/>-->
+        <!--            <br/>-->
+
+        <!--            <p align="center">&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;This is a system generated email&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;</p></p>-->
+
+        <!--                <tr align="center">-->
+        <!--                    <td align="center" style="min-width: 590px; padding: 0 8px 0 8px; font-size:11px;">-->
+        <!--                        <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin: 16px 0px 4px 0px;"/>-->
+        <!--                        <b><t t-out="object.company_id.name or ''"></t><b/>-->
+        <!--                        <div style="color: #999999;">-->
+        <!--                            <t t-out="object.company_id.phone or ''"></t> |-->
+        <!--                            <t t-out="object.company_id.email or ''"></t> |-->
+        <!--                            <t t-out="object.company_id.website or ''"></t>-->
+        <!--                        </div>-->
+        <!--                    </td>-->
+        <!--                </tr>-->
+        <!--]]>-->
+        <!--            </field>-->
+        <!--            <field name="auto_delete" eval="True"/>-->
+        <!--        </record>-->
+
+
         <!--Mail Template for Service Engagement Confirm-->
         <record id="service_engagemnet_confirmation_maiiissieitlwii" model="mail.template">
             <field name="name">Service Engagement - Send by Email</field>
@@ -373,7 +504,7 @@
         </record>
 
         <!--Mail Template for Advance Payment Notification-->
-            <record id="aassasa" model="mail.template">
+        <record id="aassasa" model="mail.template">
             <field name="name">Service Engagement Advance Payment Notification - Send by Email</field>
             <field name="model_id" ref="crm_extended.model_sale_order"/>
             <field name="subject">Service Engagement Advance Payment Notification:</field>
@@ -427,7 +558,8 @@
                                                             Dear Accountant Team,
                                                             <br/>
                                                             <br/>
-                                                            The Following Service Engagement requires Advanced Payment process from customers,
+                                                            The Following Service Engagement requires Advanced Payment
+                                                            process from customers,
                                                             Please check and process the payment.
                                                             Do not hesitate to contact us if you have any questions.
                                                             <br/>
@@ -438,7 +570,8 @@
                                                 </tr>
 
                                                 <tr>
-                                                    <table class="table-bordered" border="0" cellpadding="0" cellspacing="0" width="590"
+                                                    <table class="table-bordered" border="0" cellpadding="0"
+                                                           cellspacing="0" width="590"
                                                            style="min-width: 590px; background-color: white; padding: 0px 8px 0px 8px; border-collapse:separate;">
                                                         <thead style="background:#ea714b;color:#fefefe">
                                                             <tr>

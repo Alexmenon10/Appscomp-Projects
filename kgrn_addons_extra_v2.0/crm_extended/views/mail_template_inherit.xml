@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="mail_template_survey_feedback_fooo" model="mail.template">
+        <field name="name">Survey: Invite</field>
+        <field name="model_id" ref="model_sale_order"/>
+        <field name="subject">Participate to {{ object.name }}</field>
+        <field name="body_html" type="html">
+            <div style="margin: 0px; padding: 0px; font-size: 13px;">
+                <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                    Dear
+<!--                    <t t-out="object.survey_id.partner_ids.name or 'Customer'"/>-->
+                    <br/>
+                    <br/>
+                    <span>
+                        We have supported the Service Engagement of<t t-out="object.name or ''"/>,
+                        we have fulfiled your exceptations.
+                        Please share your experience through this feedback link and support us
+                        Thank you!!
+                    </span>
+<!--                    <div style="margin: 16px 0px 16px 0px;">-->
+<!--                        <a t-att-href="(object.survey_start_url)"-->
+<!--                           style="background-color: #875A7B; padding: 8px 16px 8px 16px; text-decoration: none; color: #fff; border-radius: 5px; font-size:13px;">-->
+<!--                            Start Survey-->
+<!--                        </a>-->
+<!--                    </div>-->
+                    Thank you for your participation.
+                </p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+</odoo>

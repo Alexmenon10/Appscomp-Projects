@@ -2,6 +2,7 @@ from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+import werkzeug
 
 import time
 
@@ -21,7 +22,7 @@ class Lead(models.Model):
         return cc
 
     def action_new_quotation(self):
-        action = self.env["ir.actions.actions"]._for_xml_id("sale_crm.sale_action_quotations_new")
+        action = self.env['ir.actions.actions']._for_xml_id("sale_crm.sale_action_quotations_new")
         action['context'] = {
             'search_default_opportunity_id': self.id,
             'default_opportunity_id': self.id,
@@ -66,6 +67,14 @@ class SaleOrder(models.Model):
     journal_type = fields.Selection([
         ('bank', 'Bank'),
         ('cash', 'Cash')], string="Journal Type")
+    feedback_id = fields.Many2one('survey.survey', string='FeedBack ID')
+    survey_start_url = fields.Char('Survey URL', compute='_compute_survey_start_url')
+
+    @api.depends('feedback_id.access_token')
+    def _compute_survey_start_url(self):
+        for invite in self:
+            invite.survey_start_url = werkzeug.urls.url_join(invite.feedback_id.get_base_url(),
+                                                             invite.feedback_id.get_start_url()) if invite.feedback_id else False
 
     @api.onchange('next_invoice_date_num')
     def onchange_duration(self):
@@ -76,13 +85,6 @@ class SaleOrder(models.Model):
             self.write({
                 'next_invoice_date': result_1,
             })
-
-    # @api.onchange('journal_type')
-    # def onchange_journal_type(self):
-    #     journal = self.env['account.journal'].search([('type', '=', self.journal_type)])
-    #     self.write({
-    #         'journal_id': journal.id,
-    #     })
 
     def get_advance_payment(self):
         hotel_advance_pay = self.env["account.payment"]
@@ -107,12 +109,8 @@ class SaleOrder(models.Model):
             })
 
     def send_feedback_screen(self):
-        if self.partner_id.email:
-            print("The current customer email is", self.partner_id.email)
-            # survey = self.env['survey.survey']
-            # survey.action_test_survey()
-        else:
-            raise ValidationError(_('Alert!,The Selected Customer, does not have email address, Please check it'))
+        template = self.env.ref('crm_extended.customer_feed_back_form_sssuu', False)
+        template.sudo().send_mail(self.id, force_send=True)
 
     def cron_service_proposal_reminder(self):
         service_proposal = self.env['sale.order'].sudo().search([('state', 'in', ['draft', 'sent'])])

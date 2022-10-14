@@ -27,8 +27,8 @@
                 </xpath>
                 <xpath expr="//field[@name='work_email']" position="after">
                     <field name="contract_employee"/>
-<!--                    <field name="check_in"/>-->
-<!--                    <field name="check_out"/>-->
+                    <!--                    <field name="check_in"/>-->
+                    <!--                    <field name="check_out"/>-->
                     <field name="check_in_time" invisible="1" required="1" widget="float_time"/>
                     <field name="check_out_time" invisible="1" required="1" widget="float_time"/>
 
@@ -132,6 +132,25 @@
                 <tree>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+
+        <record id="view_hr_employee_code_form_inherited" model="ir.ui.view">
+            <field name="name">Hr Employee Kanben inherited</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.hr_kanban_view_employees"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="after">
+                    <span t-if="record.job_title.raw_value" class="o_kanban_record_subtitle">
+                        <field name="state" invisible="1"/>
+                        <field name="emp_code"
+                               widget="badge"
+                               decoration-success="state == 'draft'"
+                               decoration-danger="state == 'exit'"
+                               decoration-warning="emp_code == False"
+                        />
+                    </span>
+                </xpath>
             </field>
         </record>
 
