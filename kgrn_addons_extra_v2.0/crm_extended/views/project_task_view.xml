@@ -72,9 +72,9 @@
                     <field name="request_to_approve" invisible="1"/>
                     <field name="request_approved" invisible="1"/>
                     <field name="request_rejected" invisible="1"/>
-                    <field name="time_extended_request_to_approve" invisible="0"/>
-                    <field name="time_extended_request_approved" invisible="0"/>
-                    <field name="time_extended_request_rejected" invisible="0"/>
+                    <field name="time_extended_request_to_approve" invisible="1"/>
+                    <field name="time_extended_request_approved" invisible="1"/>
+                    <field name="time_extended_request_rejected" invisible="1"/>
                     <field name="stage_name" invisible="1"/>
                     <field name="priority" widget="priority"/>
                 </field>
