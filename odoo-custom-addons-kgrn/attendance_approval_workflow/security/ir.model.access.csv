@@ -1,8 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_hr_attendance_approve,access.hr.attendance.approve,model_hr_attendance_approve,hr_attendance.group_hr_attendance_user,1,1,1,0
-access_custom_hr_attendance_refuse_wizard,access.custom.hr.attendance.refuse.wizard,model_custom_hr_attendance_refuse_wizard,hr_attendance.group_hr_attendance_user,1,1,1,0
-access_import_attendance,import.attendance,model_import_attendance,,1,1,1,1
-access_import_bulk_attendance,import.bulk.attendance,model_import_bulk_attendance,,1,1,1,1
-access_import_manual_attendance,import.manual.attendance,model_import_manual_attendance,,1,1,1,1
-access_attendance_import_wizard,attendance.import.wizard,model_attendance_import_wizard,,1,1,1,1
-access_attendance_bulk_wizard,attendance.bulk.wizard,model_attendance_bulk_wizard,,1,1,1,1

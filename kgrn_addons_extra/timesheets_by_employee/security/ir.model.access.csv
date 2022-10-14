@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_timesheet_report,timesheet.report,model_timesheet_report,base.group_user,1,1,1,1
-access_project_details_wizard,project.details.wizard,model_project_details_wizard,,1,1,1,1
-access_project_task_pending_details,project.task.pending.details,model_project_task_pending_details,,1,1,1,1
-access_project_based_wizard,project.based.wizard,model_project_based_wizard,,1,1,1,1

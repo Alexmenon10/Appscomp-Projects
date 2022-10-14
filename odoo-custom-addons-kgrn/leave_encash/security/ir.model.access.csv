@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_leave_encash,access_leave_encash,model_leave_encash,hr.group_hr_manager,1,1,1,1
-access_leave_encash_process,access_leave_encash_process,model_leave_encash_process,hr.group_hr_manager,1,1,1,1
-access_leave_encash_lines,access_leave_encash_lines,model_leave_encash_lines,hr.group_hr_manager,1,1,1,1
-access_leave_encash_report_wizard,access_leave_encash_report_wizard,model_leave_encash_report_wizard,hr.group_hr_manager,1,1,1,1
