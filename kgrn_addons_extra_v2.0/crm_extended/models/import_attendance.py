@@ -251,6 +251,7 @@ class BulkAttendance(models.Model):
     @api.onchange('emp_code')
     def _onchange_employee_code(self):
         for vals in self:
+            name = 0
             emp_id = self.env['hr.employee'].search([('emp_code', '=', vals.emp_code)])
             for val in emp_id:
                 name = val.id
